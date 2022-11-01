@@ -1,0 +1,77 @@
+/* table with map   */
+.maptable 
+{
+    border-collapse: collapse;
+    border: none;
+    border-spacing: 0px;
+}
+
+ .maptable td 
+ {
+        margin: 0px;
+        padding: 0px;
+        border: none;
+ }
+
+/* style for image which can hide another image by "fog" */
+.fogimg 
+{
+    margin-top: -40px;
+    margin-left: -40px;
+}
+
+/* div for inventory */
+.invdiv 
+{
+    border: 1px solid black;
+}
+
+/* div for suggested for trade items */
+.suginvdiv 
+{
+    border: 1px solid black;
+    height: 80px;
+    background-color: antiquewhite;
+}
+
+/* class for images of equiped items */
+.equip 
+{
+    border: 2px solid red;
+}
+
+#log_div
+{
+    height: 20%;
+    overflow-y: auto;
+}
+
+/* styles for different languages  */
+/* 0 = no language, sounds  */
+.lang0 {
+    color: black;
+}
+
+/* 1 = human  */
+.lang1 
+{
+    color: darkblue;
+}
+
+/* 2 = elf  */
+.lang2 
+{
+    color: lightseagreen;
+}
+
+/* 3 = dwarf  */
+.lang3 
+{
+    color: rosybrown;
+}
+
+/* 4 = gobin  */
+.lang4 
+{
+    color: forestgreen;
+}
