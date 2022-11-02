@@ -1,0 +1,210 @@
+<html>
+<head>
+    <!-- CHANGE -->
+    <link rel="stylesheet" type="text/css" href="css/mobile.css" />
+    <link rel="stylesheet" type="text/css" href="css/forms1.css" />
+
+    <script type="text/javascript" src="js/utils.js"></script>
+    <script type="text/javascript" src="js/forms.js"></script>
+    <script type="text/javascript" src="js/gkernel.js"></script>
+    <script type="text/javascript" src="js/gclient.js"></script>
+    <script language="javascript">
+
+        // CHANGE
+        //let serv_addr = 'http://127.0.0.1:2008?id=';
+        let serv_addr = 'https://gobl.quant.su?id=';
+
+        // client settings:
+        let img_dir = 'img/';
+        let pers_dir = img_dir + 'pers/';
+        let floor_dir = img_dir + 'floor/';
+        let map_content = '<img src="' + img_dir + 'map/dark.png"><img class="fogimg" src="' + img_dir + 'map/empty.png">';     // default content of map cell
+
+        // CHANGE
+        const map_width = 12;
+        const map_height = 16;
+
+        let url;// = serv_addr + player_id;
+
+        let map = null;
+        let floor_map = null;
+        let pers_map = null;
+        let scream_map = null;
+        let debug_div = null;           // div for debugging
+
+        let x0 = Number(Math.ceil(0.5 * map_width) - 1);
+        let y0 = Number(Math.ceil(0.5 * map_height) - 1);
+        let dx = x0, dy = y0;                 // coordinate shift
+        let cell_size = 40;          // size of map cell in pixels
+
+        let start_x, start_y;   // coordinates of touch
+
+        
+        function start_touch(event)
+        {
+            start_x = event.touches[0].screenX;
+            start_y = event.touches[0].screenY;
+            log_div.innerHTML = 'x: ' + start_x + ' y: ' + start_y;
+        };
+
+        function end_touch(event)
+        {
+            let dx = event.touches[0].screenX - start_x;
+            let dy = event.touches[0].screenY - start_y;
+            log_div.innerHTML += 'dx: ' + dx + ' dy: ' + dy;
+            if (dx == 0)
+                dx = 1;
+            if (dy == 0)
+                dy = 1;
+            if ((dy / dx) > 5) {
+                send_data('#m');
+                return;
+            }
+            if ((dx / dy) > 5) {
+                send_data('#r');
+                return;
+            }
+            if ((dy / dx) < -5) {
+                send_data('#l');
+                return;
+            }
+        };
+        
+
+    </script>
+</head>
+<body>
+    <center>
+        <!-- some utils tags, css and scripts are in forms.css/forms.js -->
+        <!-- for input numbers -->
+        <div id="numb_input">
+            <span>Enter number: </span>
+            <form onsubmit="return confirm_val(this);">
+                <input name="val" type="number" value="1" onfocus="select(this);" onkeydown="if (event.keyCode == 27) close_modal(this); event.stopPropagation();" />
+                <input type="submit" value="OK" />
+                <button type="button" onclick="close_modal(this);">cancel (Esc)</button>
+            </form>
+        </div>
+
+        <!-- for login/registration form -->
+        <div class="gray active"></div>
+        <div class="modal active">
+            <a target="_blank" href="about.html">How to play</a>
+            <h2>Login</h2>
+            <form name="login" onsubmit="return false;">
+                Enter id: <br />
+                <input name="id" value="" />
+                <br /> Enter password: <br />
+                <input name="pass" value="" type="password" />
+                <br />
+                <button type="button" onclick="connect(this.parentNode.id.value, this.parentNode.pass.value); close_modal(this);">Login</button>
+            </form>
+            <h2>or Register</h2>
+            <form name="reg" onsubmit="return false;">
+                Choose password: <br />
+                <input name="pass" value="" type="password" />
+                <br /> Retype password: <br />
+                <input name="conf" value="" type="password" />
+                <br />
+                You are....
+                <table>
+                    <tr>
+                        <td>human</td>
+                        <td>dwarf</td>
+                    </tr>
+                    <tr>
+                        <td><img src="img/pl1.png" /></td>
+                        <td><img src="img/pl2.png" /></td>
+                    </tr>
+                    <tr>
+                        <td><input type="radio" value="1" name="cls" checked /></td>
+                        <td><input type="radio" value="2" name="cls" /></td>
+                    </tr>
+                </table>
+                <button type="button" onclick="let ps = this.parentNode.pass.value; if (ps == '') { alert('empty password!'); return false; }; if (ps == this.parentNode.conf.value) { connect(0, this.parentNode.pass.value, this.parentNode.cls.value); close_modal(this); } else alert('Passwords are mismatch');">Registration</button>
+            </form>
+        </div>
+        <!-- end login/registration form -->
+        <!-- map -->
+        <div ontouchend="end_touch(event);" ontouchstart="start_touch(event);">
+            <table class="maptable" id="map" ondrop="drop_inventory_img(); return false;" ondragover="return false;">
+            </table>
+            <div id="floor_map"></div>
+            <div id="pers_map"></div>
+            <div id="scream_map"></div>
+        </div>
+
+        <button type="button" onclick="send_data('#l');" class="int">&larr;</button>
+        <button type="button" onclick="send_data('#m');" class="int">&uarr;</button>
+        <button type="button" onclick="send_data('#r');" class="int">&rarr;</button>
+        <button type="button" onclick="send_data('#t');" class="int">&#8634;</button>
+        <!-- state bars -->
+        <div class="ui_cont">
+            <div class="ui">your id: <span id="id_label"></span>, hp: <span id="hp_label"></span></div>
+            <form><input name="text" maxlength=60 value="hello"><button type="button" onclick="let frm = get_ptag(this, 'FORM'); send_data('#s' + frm.text.value);">say</button></form>
+        </div>
+
+        <!-- invenory (and opponent's) -->
+        <div id="inv_div" class="invdiv"></div>
+        <div id="opponent_div">
+            <div id="sug_div" class="suginvdiv" ondrop="suggest_invent_img(drag_img, this); hide_elem(agree_btn); return false;" ondragover="return false;"></div>
+            <br />
+            <span id="trade_result"></span>
+            <button id="trade_btn" onclick="send_trade(sug_div, opsug_div); hide_elem(agree_btn);">suggest</button>
+            <button id="agree_btn" onclick="send_data('#a'); hide_elem(this);">agree</button>
+            <br />
+            <div id="opsug_div" class="suginvdiv" ondrop="suggest_invent_img(drag_img, this); hide_elem(agree_btn); return false;" ondragover="return false;"></div>
+            <div id="trade_div"></div>
+        </div>
+
+        <!-- history (and debugging) -->
+        <div id="debug_div"></div>
+        <div id="log_div"></div>
+    </center>
+    <script>
+        // form for number entering
+        numb_input = document.getElementById('numb_input');
+        hide_elem(numb_input);
+
+        id_label = document.getElementById('id_label');
+        hp_label = document.getElementById('hp_label');
+
+        map = document.getElementById('map');
+        fill_table_cont(map_width, map_height, '', map_content, map);
+
+        // calculate map cell size in pixels
+        //alert(Number(map.rows[0].cells[0].getBoundingClientRect().width));
+        //! это какой-то пипец. так работает, если перед этим есть алерт. без этого зануляется !!!  я не могу понять как работает этот грёбаный жаваскрипт
+        //cell_size = Number(map.rows[0].cells[0].getBoundingClientRect().width);
+
+        floor_map = document.getElementById('floor_map');
+        pers_map = document.getElementById('pers_map');
+        scream_map = document.getElementById('scream_map');
+        inv_div = document.getElementById('inv_div');
+        sug_div = document.getElementById('sug_div');
+        opsug_div = document.getElementById('opsug_div');
+        trade_div = document.getElementById('trade_div');
+        opponent_div = document.getElementById('opponent_div');
+        log_div = document.getElementById('log_div');
+
+        trade_btn = document.getElementById('trade_btn');
+        agree_btn = document.getElementById('agree_btn');
+        trade_res = document.getElementById('trade_result');
+
+        set_trade_mode(false);
+
+        document.onkeydown = function () { key_press(event); };
+        //document.ontouchstart = function () { start_touch(event); };
+        //document.ontouchmove = function () { end_touch(event); };
+
+        // debugging
+        debug_div = document.getElementById('debug_div');
+
+        // CHANGE
+        hide_elem(debug_div);
+        //document.forms.login.id.value = 1;
+
+        document.forms['login'].pass.focus();
+    </script>
+</body>
+</html>
