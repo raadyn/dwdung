@@ -75,16 +75,32 @@ function set_trade_mode(mode)
 {
     trade_mode = mode;
     if (trade_mode) {
-        show_elem(opponent_div);
+
+        show_elem(sug_div);
+        show_elem(opsug_div);
+        show_elem(trade_div);
+        show_elem(trade_btn);
+
         hide_elem(agree_btn);
         trade_res.innerHTML = '';
         show_elem(trade_res);
+
+        show_elem(opponent_div);
     }
-    else {
-        hide_elem(opponent_div);
+    else
+    {
+        hide_elem(sug_div);
+        hide_elem(opsug_div);
+        hide_elem(trade_div);
+        hide_elem(trade_btn);
+        hide_elem(trade_res);
+        hide_elem(agree_btn);
+
         clear_childs(sug_div);
         clear_childs(opsug_div);
         clear_childs(trade_div);
+
+        hide_elem(opponent_div);
     }
 }
 
