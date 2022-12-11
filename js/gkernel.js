@@ -174,7 +174,7 @@ function parse_floor(txt, cell_map, fl_map, csize)
         }
         else
         {
-            src = floor_dir + look + '.png';
+            src = floor_dir + look + '.gif';
             add_img_to_arr(ident, cell[0], cell[1], 0, src, fl_map, floor_objs);
         }
     }
