@@ -1,27 +1,36 @@
-body, p, input, label, a, button {
+body, p, input, label, a, button 
+{
     font-family: sans-serif;
     font-size: 16px;
     margin: 0;
     padding: 0;
 }
-body {
+
+body 
+{
     background-color: #fff2c9;
 }
-input {
+
+input 
+{
     padding: 6px;
     border: 1px solid #000;
 }
-button {
+
+button 
+{
     border-radius: 20px;
     padding: 8px;
     cursor: pointer;
     background-color: #fff;
     border: 1px solid green;
 }
-button:hover {
+button:hover 
+{
     background-color: #96fd96;
 }
-form {
+form 
+{
     margin: 0;
     padding: 0;
 }
@@ -81,13 +90,6 @@ form {
         border: none;
  }
 
-/* style for image which can hide another image by "fog" */
-.fogimg 
-{
-    margin-top: -40px;
-    margin-left: -40px;
-}
-
 /* div for inventory */
 .invdiv 
 {
@@ -137,7 +139,7 @@ form {
     color: rosybrown;
 }
 
-/* 4 = gobin  */
+/* 4 = goblin  */
 .lang4 
 {
     color: forestgreen;

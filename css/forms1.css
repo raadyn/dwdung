@@ -8,6 +8,7 @@
     left: 50%;
     border: 1px solid black;
     background-color: #fff;
+    z-index: 10;
 }
 
 /*   class for modal windows */
@@ -21,6 +22,7 @@
     background-color: #fff2c9;
     padding: 15px;
     display: none;
+    z-index: 10;
 }
 
 .gray {

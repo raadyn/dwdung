@@ -13,12 +13,6 @@
         border: none;
  }
 
-/* style for image which can hide another image by "fog" */
-.fogimg 
-{
-    margin-top: -40px;
-    margin-left: -40px;
-}
 
 /* div for inventory */
 .invdiv 
@@ -70,7 +64,7 @@
     color: rosybrown;
 }
 
-/* 4 = gobin  */
+/* 4 = goblin  */
 .lang4 
 {
     color: forestgreen;
