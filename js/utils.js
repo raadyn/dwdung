@@ -218,3 +218,21 @@ function get_ptag(obj, tagname)
     return node;
 }
 
+// split txt into an array by the specified  delimiter (split_symb) and then each element into subarray (by inern_split delimiter),
+// iterate by the first array and call func with subarray parameter
+// up to 4 additional parameters for func call
+
+// ....
+// split_symb and intern_split are symbols which are delimiter for txt and txt[] correspondingly
+function parse_iterator(split_symb, intern_split, txt, func)
+{
+    let arr;
+    let items = txt.split(split_symb);
+    for (let i = 0; i < items.length - 1; i++)  // length - 1 as the last split_symb usually finalize string
+    {
+        if (items[i] == '')
+            continue;
+        arr = items[i].split(intern_split);
+        func(i, arr, arguments[4], arguments[5], arguments[6], arguments[7]);
+    }
+};

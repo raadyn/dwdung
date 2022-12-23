@@ -6,18 +6,39 @@
 // floor_dir - directory with floor objects images
 
 // Global variables:
-
-
 let source;     // for SSE: event source
 
+// associative arrays for persons and floor objects
+// zB persons[ident] = (obtained: boolean, image: <img>)
 let persons = new Map();      // associative array, where key is person unical identifier and value is corresponding image object
-// persons[ident] = (obtained: boolean, image: <img>)
 let floor_objs = new Map();     // the same for floor objects
 
+// array of walls and other non-person objects (their images)
+//let objects = new Array();
+
 // some consts:
-const ciPerson = 1000;
+//const ciPerson = 1000;
 const csDead = 700;
 
+// mandatory html-elements:
+let map = null;
+let floor_map = null;
+let wall_map = null;
+let pers_map = null;
+let scream_map = null;
+let debug_div = null;           // div for debugging
+
+
+function init_general_elems()
+// define html elements mandatory for all types of clients
+{
+    map = document.getElementById('map');
+    floor_map = document.getElementById('floor_map');
+    pers_map = document.getElementById('pers_map');
+    wall_map = document.getElementById('wall_map');
+    scream_map = document.getElementById('scream_map');
+    debug_div = document.getElementById('debug_div');
+};
 
 // shift images in associative array (Map) of given format (like variables persons and floor_objs)
 function shift_images(dx, dy, csize, arr)
@@ -27,7 +48,7 @@ function shift_images(dx, dy, csize, arr)
         pair[1][1].style.left += dx * csize;
         pair[1][1].style.top += dy * csize;
     }
-}
+};
 
 // clear non-actual images in associative arrays like persons or floor_objes (values keep array[obtained now, image])
 function clear_images(arr)
@@ -42,8 +63,7 @@ function clear_images(arr)
         else
             pair[1][0] = false;
     }
-}
-
+};
 
 // place img on document at coordinates (x,y) and save direction (orientation) in a special field
 // dir = direction = (0,1,2,3) * pi/2
@@ -80,7 +100,7 @@ function move_and_rot_img(img, x, y, dir)
             img.style.transform = 'rotate(' + angl + 'deg)';
         }
     }
-}
+};
 
 function get_cell_coord(x, y, cell_map, cell_sz)
 // get pixel coordinates of the cell, even if it is out of border
@@ -90,8 +110,7 @@ function get_cell_coord(x, y, cell_map, cell_sz)
     res[0] = rect.left + x * cell_sz;
     res[1] = rect.top + y * cell_sz;
     return res;
-}
-
+};
 
 function add_img_to_arr(id, x, y, dir, src, div, arr)
 // add image(src=src) to associative array like persons or floor_objs
@@ -116,7 +135,7 @@ function upd_img(id, x, y, dir, arr)
     move_and_rot_img(img, x, y, dir);
 };
 
-
+//! remove to admin
 function parse_persons(txt, cell_map, pers_map, csize)
 {
 
@@ -151,7 +170,7 @@ function parse_persons(txt, cell_map, pers_map, csize)
     clear_images(persons);
 };
 
-
+//! remove to admin
 function parse_floor(txt, cell_map, fl_map, csize)
 {
     let floor = txt.split('|');
