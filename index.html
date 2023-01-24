@@ -8,10 +8,10 @@
     <script type="text/javascript" src="js/forms.js"></script>
     <script type="text/javascript" src="js/gkernel.js"></script>
     <script type="text/javascript" src="js/gclient.js"></script>
+    <script type="text/javascript" src="js/lang.js"></script>
     <script language="javascript">
 
         // CHANGE
-        //let serv_addr = 'http://127.0.0.1:2008?id=';
         let serv_addr = 'https://gobl.quant.su?id=';
 
         // client settings:
@@ -50,22 +50,8 @@
         <div class="gray active"></div>
         <div class="modal active">
             <a target="_blank" href="about.html">How to play</a>
-            <h2>Login</h2>
-            <form name="login" onsubmit="return false;">
-                Enter id: <br />
-                <input name="id" value="" />
-                <br /> Enter password: <br />
-                <input name="pass" value="" type="password" />
-                <br />
-                <button type="button" onclick="connect(this.parentNode.id.value, this.parentNode.pass.value); close_modal(this);">Login</button>
-            </form>
-            <h2>or Register</h2>
+            <h2></h2>
             <form name="reg" onsubmit="return false;">
-                Choose password: <br />
-                <input name="pass" value="" type="password" />
-                <br /> Retype password: <br />
-                <input name="conf" value="" type="password" />
-                <br />
                 You are....
                 <table>
                     <tr>
@@ -87,10 +73,35 @@
                         <td><input type="radio" value="4" name="cls" /></td>
                     </tr>
                 </table>
-                <button type="button" onclick="let ps = this.parentNode.pass.value; if (ps == '') { alert('empty password!'); return false; }; if (ps == this.parentNode.conf.value) { connect(0, this.parentNode.pass.value, this.parentNode.cls.value); close_modal(this); } else alert('Passwords are mismatch');">Registration</button>
+                <button id="reg_btn" type="button" onclick="let ps = this.parentNode.pass.value; if (ps == '') { alert('empty password!'); return false; }; if (ps == this.parentNode.conf.value) { connect(0, this.parentNode.pass.value, this.parentNode.cls.value); close_modal(this); } else alert('Passwords are mismatch');">START A NEW GAME</button>
+                <br /><br />
+                <span style="font-size: 10pt;">password (default: ff):</span>
+                <input name="pass" value="ff" type="password" style="font-size: 10pt;" />
+                <br /><span style="font-size: 10pt;">retype password:</span>
+                <input name="conf" value="ff" type="password" style="font-size: 10pt;" />
+                <br />
+            </form>
+            <hr />
+            <h2>or use existing account:</h2>
+            <form name="login" onsubmit="return false;">
+                Enter id: <br />
+                <input name="id" value="" />
+                <br /> Enter password: <br />
+                <input name="pass" value="" type="password" />
+                <br />
+                <button type="button" onclick="connect(this.parentNode.id.value, this.parentNode.pass.value); close_modal(this);">Login</button>
             </form>
         </div>
         <!-- end login/registration form -->
+        <!-- characters info -->
+        <div id="char_div" class="modal">
+            <span>Skills: </span>
+            <div id="skills_div"></div>
+            <form onsubmit="return false;" onkeydown="if (event.keyCode == 27) {let el = get_ptag(this, 'DIV'); hide_elem(el)} event.stopPropagation();">
+                <button type="button" onclick="let el = get_ptag(this, 'DIV'); hide_elem(el);">close</button>
+            </form>
+        </div>
+
 
         <!-- map -->
         <div ondrop="drop_inventory_img(); return false;" ondragover="return false;">
@@ -111,8 +122,12 @@
         <!-- state bars -->
         <div class="ui_cont">
             <div class="ui">your id: <span id="id_label"></span>, hp: <span id="hp_label"></span></div>
-            <form><input name="text" maxlength=60 value="hello"><button type="button" onclick="let frm = get_ptag(this, 'FORM'); send_data('#s' + frm.text.value);">say</button></form>
+            <form><input onkeydown="if (event.keyCode == 13) {send_data('#s' + this.value); return false; }" name="text" maxlength=60 value="hello"><button type="button" onclick="let frm = get_ptag(this, 'FORM'); send_data('#s' + frm.text.value);">say</button></form>
+            <span id="dt_label"></span>
         </div>
+
+        <!-- kick div -->
+        <div id="kick_div"></div>
 
         <!-- inventory (and opponent's) -->
         <div id="inv_div" class="invdiv"></div>
@@ -160,10 +175,7 @@
 
         // CHANGE
         hide_elem(debug_div);
-        //document.forms.login.id.value = ;
-        //document.forms.login.pass.value = ;
-
-        document.forms['login'].id.focus();
+        document.getElementById('reg_btn').focus();
     </script>
 </body>
 </html>
