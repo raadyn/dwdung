@@ -21,6 +21,7 @@ let floor_objs = new Map();     // the same for floor objects
 const csDead = 700;
 
 // mandatory html-elements:
+let dt_label = null;        // span for timedifference output
 let map = null;
 let floor_map = null;
 let wall_map = null;
@@ -29,9 +30,14 @@ let scream_map = null;
 let debug_div = null;           // div for debugging
 
 
+// some universal variables
+let prev_time = null;       // time of previous obtained data
+
+
 function init_general_elems()
 // define html elements mandatory for all types of clients
 {
+    dt_label = document.getElementById('dt_label');
     map = document.getElementById('map');
     floor_map = document.getElementById('floor_map');
     pers_map = document.getElementById('pers_map');
@@ -106,9 +112,11 @@ function get_cell_coord(x, y, cell_map, cell_sz)
 // get pixel coordinates of the cell, even if it is out of border
 {
     let res = [0, 0];
-    let rect = cell_map.rows[0].cells[0].getBoundingClientRect();
-    res[0] = rect.left + x * cell_sz;
-    res[1] = rect.top + y * cell_sz;
+    //let rect = cell_map.rows[0].cells[0].getBoundingClientRect();
+    //res[0] = rect.left + x * cell_sz;
+    //res[1] = rect.top + y * cell_sz;
+    res[0] = cell_map.offsetLeft + x * cell_sz;
+    res[1] = cell_map.offsetTop + y * cell_sz;
     return res;
 };
 
@@ -133,71 +141,4 @@ function upd_img(id, x, y, dir, arr)
     arr.get(id)[0] = true;
     let img = arr.get(id)[1];
     move_and_rot_img(img, x, y, dir);
-};
-
-//! remove to admin
-function parse_persons(txt, cell_map, pers_map, csize)
-{
-
-    let pers = txt.split('|');
-    let data, ident, x, y, cell, look, dir, src, state;
-    for (let i = 0; i < pers.length - 1; i++)
-    {
-        if (pers[i] == '')
-            continue;
-
-        data = pers[i].split(' ');
-        ident = String(data[0]);
-        x = Number(data[1]);
-        y = Number(data[2]);
-        look = data[3];
-        dir = data[4];
-        state = data[5];
-        cell = get_cell_coord(x + dx, y + dy, cell_map, csize);
-        if (persons.has(ident)) // there is this person already
-        {
-            upd_img(ident, cell[0], cell[1], dir, persons);
-        }
-        else {
-            if (state != csDead)
-            {
-                src = pers_dir + look + '.png';
-                add_img_to_arr(ident, cell[0], cell[1], dir, src, pers_map, persons);
-            }
-        }
-    }
-
-    clear_images(persons);
-};
-
-//! remove to admin
-function parse_floor(txt, cell_map, fl_map, csize)
-{
-    let floor = txt.split('|');
-    let data, ident, x, y, cell, look, src;
-    for (let i = 0; i < floor.length - 1; i++)
-    {
-        if (floor[i] == '')
-            continue;
-
-        data = floor[i].split(' ');
-        ident = String(data[0]);
-        x = Number(data[1]);
-        y = Number(data[2]);
-        look = data[3];
-        cell = get_cell_coord(x + dx, y + dy, cell_map, csize);
-
-        if (floor_objs.has(ident)) // there is this floor obj already
-        {
-            upd_img(ident, cell[0], cell[1], 0, floor_objs);
-        }
-        else
-        {
-            src = floor_dir + look + '.gif';
-            add_img_to_arr(ident, cell[0], cell[1], 0, src, fl_map, floor_objs);
-        }
-    }
-
-    // remove that we don't see
-    clear_images(floor_objs);
 };

@@ -17,6 +17,8 @@ let id_label = null;        // element to show player id
 let hp_label = null;        // to show your hp
 let inv_div = null;             // div for inventory
 let own_img = null;             // image of player
+let char_div = null;            // div for characteristics
+let kick_div = null;            // div for superkicks
 // trade:
 let sug_div = null;             // div for items that you suggest to trade
 let opsug_div = null;           // the same for oppoenent
@@ -62,6 +64,9 @@ function init_client_elems()
     hp_label = document.getElementById('hp_label');
     inv_div = document.getElementById('inv_div');
     log_div = document.getElementById('log_div');
+    char_div = document.getElementById('char_div');
+    kick_div = document.getElementById('kick_div');
+    hide_elem(char_div);
 
     // elements for trading
     sug_div = document.getElementById('sug_div');
@@ -79,8 +84,10 @@ function init_client_elems()
 async function send_data(cmd)
 // send cmd to server
 {
-    fetch(url + '&k=' + key, { method: "POST", body: '?id=' + player_id + cmd }).then(function (response) {
+    ///*
+    fetch(url + '&k=' + key, { method: "POST", body: '?id=' + player_id + cmd/*, mode: 'no-cors'*/ }).then(function (response) {
         if (response.ok) {
+            //console.log('response:' + response);
             //response.blob().then(function (myBlob) {
             //    var objectURL = URL.createObjectURL(myBlob);
             //    myImage.src = objectURL;
@@ -92,6 +99,10 @@ async function send_data(cmd)
         .catch(function (error) {
             console.log('There has been a problem with your fetch operation: ' + error.message);
         });
+    //*/
+
+    //fetch(url + '&k=' + key, { method: "POST", body: '?id=' + player_id + cmd });
+
 };
 
 function set_trade_mode(mode)
@@ -398,7 +409,7 @@ function parse_scream_pl(txt)
 {
     let data, x, y, lang, cell, msg, rect, label;
 
-    data = txt.split(' ');
+    data = txt.split('@');
     x = Number(data[0]);
     y = Number(data[1]);
     lang = data[2];
@@ -526,6 +537,9 @@ function set_cell_img(x, y, table, src)
     return null;
 };
 
+// value of additional shift when you are close to border of the map
+const add_shift = 3;
+
 function parse_viewmap(txt)
 // draw what you see
 {
@@ -558,35 +572,53 @@ function parse_viewmap(txt)
     let shx = 0, shy = 0;
     if (mx_x + dx >= map_width) {
         need_shift = true;
-        shx = map_width - mx_x - 1 - dx
+        shx = map_width - mx_x - 1 - dx;
         dx = map_width - mx_x - 1;
     }
     else
         if (mn_x + dx < 0)
         {
             need_shift = true;
-            shx = -mn_x - dx
+            shx = -mn_x - dx;
             dx = -mn_x;
         }
     if (mx_y + dy >= map_height) {
         need_shift = true;
-        shy = map_height - mx_y - 1 - dy
+        shy = map_height - mx_y - 1 - dy;
         dy = map_height - mx_y - 1;
     }
     else
         if (mn_y + dy < 0) {
             need_shift = true;
-            shy = -mn_y - dy
+            shy = -mn_y - dy;
             dy = -mn_y;
         }
 
     if (need_shift)
     {
+        /*
+        let sh1 = setTimeout(shift_images, 100, -shx, -shy, cell_size, persons);
+        let sh2 = setTimeout(shift_images, 100, -shx, -shy, cell_size, floor_objs);
+        let sh3 = setTimeout(shift_images, 100, -shx, -shy, '', map_content, map);
+        let sh4 = setTimeout(shift_images, 100, -shx, -shy, '', '<img src="' + img_dir + 'map/empty.png" />', wall_map);
+        let sh5 = setTimeout(shift_images, 100, -shx, -shy, '', '<img src="' + img_dir + 'map/dark.png" />', vis_map);
+        */
+
+        /*
+        const [res1, res2, res3, res4, res5] = Promise.all([shift_images(-shx, -shy, cell_size, persons), shift_images(-shx, -shy, cell_size, floor_objs),
+            shift_table_cont(-shx, -shy, '', map_content, map), shift_table_cont(-shx, -shy, '', '<img src="' + img_dir + 'map/empty.png" />', wall_map),
+            shift_table_cont(-shx, -shy, '', '<img src="' + img_dir + 'map/dark.png" />', vis_map)]);
+        */
+
+        //let i;
+        //for (i = 0; i < 3; i++)
+        {
+            shift_table_cont(-shx, -shy, '', map_content, map);
+            shift_table_cont(-shx, -shy, '', '<img src="' + img_dir + 'map/empty.png" />', wall_map);
+            shift_table_cont(-shx, -shy, '', '<img src="' + img_dir + 'map/dark.png" />', vis_map);
+        }
         shift_images(-shx, -shy, cell_size, persons);
         shift_images(-shx, -shy, cell_size, floor_objs);
-        shift_table_cont(-shx, -shy, '', map_content, map);
-        shift_table_cont(-shx, -shy, '', '<img src="' + img_dir + 'map/empty.png" />', wall_map);
-        shift_table_cont(-shx, -shy, '', '<img src="' + img_dir + 'map/dark.png" />', vis_map);
     }
 
 
@@ -669,6 +701,9 @@ function key_press(event)
             case 49: // '1'
                 send_data('#h1');       // hit action
                 break;
+            case 67: // c
+                show_elem(char_div);
+                break;
         }
     else
         if (event.keyCode == 27)    // stop traiding, send cmd 'cancel current action'
@@ -681,6 +716,13 @@ function key_press(event)
 async function parse_response(txt)
 // server data to browser
 {
+    if (prev_time != null) {
+        let new_time = new Date;
+        dt_label.innerHTML = new_time - prev_time;
+        prev_time = new_time;
+    }
+    else
+        prev_time = new Date;
     switch (txt[0])
     {
         case '0':       // skip dummy input, it's necessary for some browsers
@@ -703,7 +745,7 @@ async function parse_response(txt)
 
     debug_div.innerHTML = txt;
     let commands = txt.split('{');
-    let cmd, vars;
+    let cmd, vars, img;
     for (let i = 0; i < commands.length; i++)
     {
         cmd = commands[i];
@@ -736,8 +778,18 @@ async function parse_response(txt)
             case 'i':
                 parse_inventory(commands[i].slice(1), inv_div);
                 break;
+            case 'k':
+                clear_childs(kick_div);
+                for (let j = 1; j < commands[i].length; j++)
+                {
+                    img = add_img(img_dir + 'kick' + commands[i][j] + '.png', '', kick_div);
+                    img.onclick = function () { send_data("#k" + commands[i][j]); };
+                }
+                parse_inventory(commands[i].slice(1), inv_div);
+                break;
             case 'm':       // some standard messages
                 vars = commands[i].slice(1).split(' ');
+                //! change to switch
                 if (vars[0] == '0') {
                     add_child('p', 'you died!', '', log_div, true);
                     //! probably, it's not optimal, because we need only reset <img.src>
@@ -748,6 +800,8 @@ async function parse_response(txt)
                 }
                 else if (vars[0] == '1')
                     add_child('p', 'you obtained ' + parseInt(vars[1], 16) + ' damage!', '', log_div, true);
+                else if (vars[0] == '2')
+                    add_child('p', 'your ' + skill_names[parseInt(vars[1], 16)] + ' skill was improved', '', log_div, true);
                 break;
             case 'o':
                 if (!trade_mode)
