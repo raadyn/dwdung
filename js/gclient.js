@@ -619,6 +619,8 @@ function parse_viewmap(txt)
         }
         shift_images(-shx, -shy, cell_size, persons);
         shift_images(-shx, -shy, cell_size, floor_objs);
+        own_img.style.left += shx * cell_size;
+        own_img.style.top += shy * cell_size;
     }
 
 
@@ -757,7 +759,7 @@ async function parse_response(txt)
                     trade_res.innerHTML = 'too cheap!';
                 else if (cmd[1] == '3')
                     trade_res.innerHTML = 'waiting...';
-                else {
+                else {          // including '4', const ctEscape
                     set_trade_mode(false);
                     if (cmd[1] == '2')
                         add_child('p', 'succesfull trade!', '', log_div);
