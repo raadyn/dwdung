@@ -51,8 +51,8 @@ function shift_images(dx, dy, csize, arr)
 {
     for (let pair of arr.entries())
     {
-        pair[1][1].style.left += dx * csize;
-        pair[1][1].style.top += dy * csize;
+        pair[1][1].style.left = shift_coord(pair[1][1].style.left, dx * csize);
+        pair[1][1].style.top = shift_coord(pair[1][1].style.top, dy * csize);
     }
 };
 

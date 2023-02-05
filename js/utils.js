@@ -118,6 +118,13 @@ function fill_table_cont(width, height, cls, cont, tabl)
     tabl.innerHTML = rows;
 };
 
+function shift_coord(coord, delta)
+// change coordinates of object on delta px
+{
+    let val = parseInt(coord);
+    val = val + delta;
+    return val + 'px';
+};
 
 // shift content of table and fill new cells with content=cont and class=cls
 function shift_table_cont(dx, dy, cls, cont, table)

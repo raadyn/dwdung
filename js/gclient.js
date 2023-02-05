@@ -617,10 +617,10 @@ function parse_viewmap(txt)
             shift_table_cont(-shx, -shy, '', '<img src="' + img_dir + 'map/empty.png" />', wall_map);
             shift_table_cont(-shx, -shy, '', '<img src="' + img_dir + 'map/dark.png" />', vis_map);
         }
-        shift_images(-shx, -shy, cell_size, persons);
-        shift_images(-shx, -shy, cell_size, floor_objs);
-        own_img.style.left += shx * cell_size;
-        own_img.style.top += shy * cell_size;
+        shift_images(shx, shy, cell_size, persons);
+        shift_images(shx, shy, cell_size, floor_objs);
+        own_img.style.left = shift_coord(own_img.style.left, shx * cell_size)
+        own_img.style.top = shift_coord(own_img.style.top, shy * cell_size)
     }
 
 
