@@ -706,6 +706,9 @@ function key_press(event)
             case 67: // c
                 show_elem(char_div);
                 break;
+            case 66: // b   // build command
+                send_data('#b');
+                break;
         }
     else
         if (event.keyCode == 27)    // stop traiding, send cmd 'cancel current action'
