@@ -102,6 +102,15 @@
             </form>
         </div>
 
+        <!-- craft list -->
+        <div id="craft_div" class="modal">
+            <img src="img/items/12.png" ondblclick="send_data('#c12 0');close_pdiv(this);" />
+            <img src="img/items/14.png" ondblclick="send_data('#c14 1');close_pdiv(this);" />
+            <img src="img/items/16.png" ondblclick="send_data('#c16 1');close_pdiv(this);" />
+            <form onsubmit="return false;" onkeydown="if (event.keyCode == 27) {let el = get_ptag(this, 'DIV'); hide_elem(el)} event.stopPropagation();">
+                <button type="button" onclick="close_pdiv(this);">close</button>
+            </form>
+        </div>
 
         <!-- map -->
         <div ondrop="drop_inventory_img(); return false;" ondragover="return false;">
