@@ -18,6 +18,7 @@ let hp_label = null;        // to show your hp
 let inv_div = null;             // div for inventory
 let own_img = null;             // image of player
 let char_div = null;            // div for characteristics
+let craft_div = null;           // div for craft items
 let kick_div = null;            // div for superkicks
 // trade:
 let sug_div = null;             // div for items that you suggest to trade
@@ -65,6 +66,7 @@ function init_client_elems()
     inv_div = document.getElementById('inv_div');
     log_div = document.getElementById('log_div');
     char_div = document.getElementById('char_div');
+    craft_div = document.getElementById('craft_div');
     kick_div = document.getElementById('kick_div');
     hide_elem(char_div);
 
@@ -681,9 +683,6 @@ function key_press(event)
 {
     if (trade_mode == false)
         switch (event.keyCode) {
-            case 27:    // Esc
-                send_data('#q');
-                break;
             case 38: // up arrow
             case 87: // w
                 send_data('#m');
@@ -692,9 +691,21 @@ function key_press(event)
             case 65: // a
                 send_data('#l');
                 break;
+            case 66: // b   // build command
+                send_data('#b');
+                break;
+            case 67: // c
+                show_elem(char_div);
+                break;
             case 39: // right arrow
             case 68: // d
                 send_data('#r');
+                break;
+            case 77: // m   // make(craft) command
+                show_modal(craft_div);
+                break;
+            case 27:    // Esc
+                send_data('#q');
                 break;
             case 84:    // t letter
             case 40: // down arrow  (take)
@@ -702,12 +713,6 @@ function key_press(event)
                 break;
             case 49: // '1'
                 send_data('#h1');       // hit action
-                break;
-            case 67: // c
-                show_elem(char_div);
-                break;
-            case 66: // b   // build command
-                send_data('#b');
                 break;
         }
     else
@@ -750,7 +755,7 @@ async function parse_response(txt)
 
     debug_div.innerHTML = txt;
     let commands = txt.split('{');
-    let cmd, vars, img;
+    let cmd, vars, img, id, val;
     for (let i = 0; i < commands.length; i++)
     {
         cmd = commands[i];
@@ -794,19 +799,28 @@ async function parse_response(txt)
                 break;
             case 'm':       // some standard messages
                 vars = commands[i].slice(1).split(' ');
-                //! change to switch
-                if (vars[0] == '0') {
-                    add_child('p', 'you died!', '', log_div, true);
-                    //! probably, it's not optimal, because we need only reset <img.src>
-                    fill_table_cont(map_width, map_height, '', map_content, map);
-                    fill_table_cont(map_width, map_height, '', '<img src="' + img_dir + 'map/empty.png" />', wall_map);
-                    fill_table_cont(map_width, map_height, '', '<img src="' + img_dir + 'map/dark.png" />', vis_map);
-                    set_trade_mode(false);
+                id = parseInt(vars[0], 16);
+                switch (id)
+                {
+                    case 0:
+                        add_child('p', std_messages[id], '', log_div, true);
+                        //! probably, it's not optimal, because we need only reset <img.src>
+                        fill_table_cont(map_width, map_height, '', map_content, map);
+                        fill_table_cont(map_width, map_height, '', '<img src="' + img_dir + 'map/empty.png" />', wall_map);
+                        fill_table_cont(map_width, map_height, '', '<img src="' + img_dir + 'map/dark.png" />', vis_map);
+                        set_trade_mode(false);
+                        break;
+                    case 1:
+                        add_child('p', std_messages[id].replace('{}', parseInt(vars[1], 16)), '', log_div, true);
+                        break;
+                    case 2:
+                        add_child('p', std_messages[id].replace('{}', skill_names[parseInt(vars[1], 16)]), '', log_div, true);
+                        break;
+                    case 3:
+                    case 4:
+                        add_child('p', std_messages[id], '', log_div, true);
+                        break;
                 }
-                else if (vars[0] == '1')
-                    add_child('p', 'you obtained ' + parseInt(vars[1], 16) + ' damage!', '', log_div, true);
-                else if (vars[0] == '2')
-                    add_child('p', 'your ' + skill_names[parseInt(vars[1], 16)] + ' skill was improved', '', log_div, true);
                 break;
             case 'o':
                 if (!trade_mode)

@@ -19,6 +19,22 @@ function close_modal(elem)
     gray.classList.remove("active");
 };
 
+// close parent div of element
+function close_pdiv(elem)
+{
+    let pdiv = get_ptag(elem, 'DIV');
+    if (pdiv != null)
+        hide_elem(pdiv);
+};
+
+// show window and focus on it first button
+function show_modal(window)
+{
+    let btn = window.getElementsByTagName('button')[0];
+    show_elem(window);
+    if (btn != null)
+        btn.focus();
+};
 
 // show modal window for entering number and perform action by function func (func is called with entered number)
 // you need copy a window-div to html page, and associate a variable with this window
