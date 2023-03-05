@@ -145,8 +145,9 @@
             <div id="sug_div" class="suginvdiv" ondrop="suggest_invent_img(drag_img, this); hide_elem(agree_btn); return false;" ondragover="return false;"></div>
             <br />
             <span id="trade_result"></span>
-            <button id="trade_btn" onclick="send_trade(sug_div, opsug_div); hide_elem(agree_btn);">suggest</button>
+            <button id="trade_btn" onclick="send_trade('e', sug_div, opsug_div); hide_elem(agree_btn);">suggest</button>
             <button id="agree_btn" onclick="send_data('#a'); hide_elem(this);">agree</button>
+            <button id="ask_btn" onclick="send_trade('f', sug_div, opsug_div);">ask</button>
             <br />
             <div id="opsug_div" class="suginvdiv" ondrop="suggest_invent_img(drag_img, this); hide_elem(agree_btn); return false;" ondragover="return false;"></div>
             <div id="trade_div"></div>
