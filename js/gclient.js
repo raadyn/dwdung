@@ -27,6 +27,7 @@ let trade_div = null;             // div for inventory of trader
 let trade_btn = null;            // button for trade
 let trade_res = null;           // span for trade result
 let agree_btn = null;           // btn for confirm trade exchange
+let ask_btn = null;             // btn for ask NPC suggestion for trade exchange
 let opponent_div = null;
 // other:
 let log_div = null;             // div for logging game events
@@ -77,6 +78,7 @@ function init_client_elems()
     opponent_div = document.getElementById('opponent_div');
     trade_btn = document.getElementById('trade_btn');
     agree_btn = document.getElementById('agree_btn');
+    ask_btn = document.getElementById('ask_btn');
     trade_res = document.getElementById('trade_result');
 
     vis_map = document.getElementById('vis_map');
@@ -119,6 +121,7 @@ function set_trade_mode(mode)
         show_elem(trade_btn);
 
         hide_elem(agree_btn);
+        hide_elem(ask_btn);
         trade_res.innerHTML = '';
         show_elem(trade_res);
 
@@ -253,11 +256,11 @@ function add_item_list(obj, list)
     }
 };
 
-function send_trade(list1, list2)
+function send_trade(prefix, list1, list2)
 // send query for the trade based on to containers with images
 //  hide agree_btn
 {
-    let query = '#e';
+    let query = '#' + prefix;
     let imgs1 = list1.getElementsByTagName('img');
     let imgs2 = list2.getElementsByTagName('img');
     query += String(dec_to_hex(imgs1.length)) + ' ' + String(dec_to_hex(imgs2.length));
@@ -761,18 +764,45 @@ async function parse_response(txt)
         cmd = commands[i];
         switch (cmd[0]) {
             case 'a':       // trade response
-                if (cmd[1] == '0')
-                    trade_res.innerHTML = 'no room!';
-                else if (cmd[1] == '1')
-                    trade_res.innerHTML = 'too cheap!';
-                else if (cmd[1] == '3')
-                    trade_res.innerHTML = 'waiting...';
-                else {          // including '4', const ctEscape
-                    set_trade_mode(false);
-                    if (cmd[1] == '2')
-                        add_child('p', 'succesfull trade!', '', log_div);
+                val = '';
+                switch (cmd[1]) {
+                    case '0':
+                        val = 'No room!';
+                        hide_elem(agree_btn);
+                        break;
+                    case '1':
+                        val = 'Too cheap!';
+                        break;
+                    case '3':
+                        val = 'Waiting response...';
+                        hide_elem(agree_btn);
+                        break;
+                    case '5':
+                        val = 'I don\'t need this rubbish!';
+                        break;
+                    case '2':       // ctSuccess
+                        val = 'Succesfull trade!';
+                        // no break specially, to execute the next instruction
+                    case '4':       // ctEscape
+                        set_trade_mode(false)
+                        break;
+                    case '6':   // ctShowAgreeBtn
+                        val = 'Do you agree with my proposal?'
+                        show_elem(agree_btn);
+                        break;
+                    case '7':   // ctShowAskBtn
+                        show_elem(ask_btn);
+                        break;
                 }
+
+                if (val != '')
+                {
+                    trade_res.innerHTML = val;
+                    add_child('p', val, '', log_div, true);
+                }
+
                 break;
+            /*
             case 'b':
                 if (!trade_mode)
                     set_trade_mode(true);
@@ -780,6 +810,7 @@ async function parse_response(txt)
                 show_elem(agree_btn);
                 trade_res.innerHTML = '';
                 break;
+             */
             case 'e':
                 if (!trade_mode)
                     set_trade_mode(true);
