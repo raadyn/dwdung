@@ -1,0 +1,33 @@
+.map 
+{
+    border-collapse: collapse;
+    border: none;
+    border-spacing: 0px;
+}
+
+.map td 
+{
+        width: 40px;
+        height: 40px;
+        border: 1px solid black;
+}
+
+.aim_cell 
+{
+    background-color: red;
+}
+
+td {
+    margin: 0px;
+    padding: 0px;
+    border: none;
+}
+
+.plan
+{
+    color: darkgray;
+}
+
+.att_label {
+    color: red;
+}
