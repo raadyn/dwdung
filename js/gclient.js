@@ -301,7 +301,7 @@ function drop_inventory_img()
     drag_img = null;
 };
 
-function parse_inventory(txt, parent)
+function parse_inventory(txt, parent, mobile=false)
 // sug_list is an object for item suggesting
 //! use iterator here!
 {
@@ -325,6 +325,8 @@ function parse_inventory(txt, parent)
         img.ondblclick = function () { apply_inventory_img(this); };
         img.ondragstart = function () { drag_img = this; };
         //img.onclick = function () { add_item_list(this, sug_list); };
+        if (mobile)
+            img.onclick = function () { mobile_click(this); }
     }
 };
 
@@ -749,6 +751,7 @@ async function parse_response(txt)
 
         case 'k':       // obtain key
             key = txt.slice(1);
+            //add_child('p', key, '', log_div, true);
             return;
 
         case 'r':       // obtain cls
@@ -817,7 +820,7 @@ async function parse_response(txt)
                 parse_suggestion(cmd.slice(1), sug_div);
                 break;
             case 'i':
-                parse_inventory(commands[i].slice(1), inv_div);
+                parse_inventory(commands[i].slice(1), inv_div, mobile_mode);
                 break;
             case 'k':
                 clear_childs(kick_div);
@@ -826,7 +829,7 @@ async function parse_response(txt)
                     img = add_img(img_dir + 'kick' + commands[i][j] + '.png', '', kick_div);
                     img.onclick = function () { send_data("#k" + commands[i][j]); };
                 }
-                parse_inventory(commands[i].slice(1), inv_div);
+                parse_inventory(commands[i].slice(1), inv_div, mobile_mode);
                 break;
             case 'm':       // some standard messages
                 vars = commands[i].slice(1).split(' ');
