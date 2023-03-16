@@ -1,5 +1,7 @@
 <html>
 <head>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+
     <!-- CHANGE -->
     <link rel="stylesheet" type="text/css" href="css/mobile.css" />
     <link rel="stylesheet" type="text/css" href="css/forms1.css" />
@@ -8,6 +10,7 @@
     <script type="text/javascript" src="js/forms.js"></script>
     <script type="text/javascript" src="js/gkernel.js"></script>
     <script type="text/javascript" src="js/gclient.js"></script>
+    <script type="text/javascript" src="js/lang.js"></script>
     <script language="javascript">
 
         // CHANGE
@@ -23,6 +26,8 @@
         let map_content = '<img src="' + img_dir + 'map/dark.png">';     // default content of map cell
         let cell_size = 40;          // size of map cell in pixels
 
+        let mobile_mode = true;
+
         // CHANGE
         const map_width = 12;
         const map_height = 16;
@@ -32,38 +37,48 @@
         let dy = Number(Math.ceil(0.5 * map_height) - 1);
 
         let start_x, start_y;   // coordinates of touch
+        let last_click_time = 0;         // time of
 
-        
-        function start_touch(event)
-        {
-            start_x = event.touches[0].screenX;
-            start_y = event.touches[0].screenY;
-            log_div.innerHTML = 'x: ' + start_x + ' y: ' + start_y;
+
+        function start_touch(event) {
+            start_x = parseInt(event.touches[0].screenX);
+            start_y = parseInt(event.touches[0].screenY);
+            //log_div.innerHTML = 'x: ' + start_x + ' y: ' + start_y;
         };
 
-        function end_touch(event)
-        {
-            let dx = event.touches[0].screenX - start_x;
-            let dy = event.touches[0].screenY - start_y;
-            log_div.innerHTML += 'dx: ' + dx + ' dy: ' + dy;
-            if (dx == 0)
-                dx = 1;
-            if (dy == 0)
-                dy = 1;
-            if ((dy / dx) > 5) {
+        function end_touch(event) {
+            let dx = parseInt(event.changedTouches[0].screenX) - start_x;
+            let dy = parseInt(event.changedTouches[0].screenY) - start_y;
+            let adx = Math.abs(dx);
+            let ady = Math.abs(dy);
+            if ((adx < 10) && (ady < 10))   // skip if weak motion
+                return;
+            //log_div.innerHTML += 'dx: ' + dx + ' dy: ' + dy;
+            if (adx > ady) {
+                if (dx > 0) {
+                    send_data('#r');
+                }
+                else
+                    send_data('#l');
+            }
+            else  // doesn't matter up or down
                 send_data('#m');
-                return;
-            }
-            if ((dx / dy) > 5) {
-                send_data('#r');
-                return;
-            }
-            if ((dy / dx) < -5) {
-                send_data('#l');
-                return;
-            }
         };
-        
+
+        function mobile_click(obj)
+        {
+            let currentTime = new Date().getTime();
+            let timeSinceLastClick = currentTime - last_click_time;
+            //alert(timeSinceLastClick);
+
+            if (timeSinceLastClick < 200) // 500ms
+            {
+                apply_inventory_img(obj);
+            }
+            
+            last_click_time = currentTime;
+        }
+
 
     </script>
 </head>
@@ -84,22 +99,8 @@
         <div class="gray active"></div>
         <div class="modal active">
             <a target="_blank" href="about.html">How to play</a>
-            <h2>Login</h2>
-            <form name="login" onsubmit="return false;">
-                Enter id: <br />
-                <input name="id" value="" />
-                <br /> Enter password: <br />
-                <input name="pass" value="" type="password" />
-                <br />
-                <button type="button" onclick="connect(this.parentNode.id.value, this.parentNode.pass.value); close_modal(this);">Login</button>
-            </form>
-            <h2>or Register</h2>
+            <h2></h2>
             <form name="reg" onsubmit="return false;">
-                Choose password: <br />
-                <input name="pass" value="" type="password" />
-                <br /> Retype password: <br />
-                <input name="conf" value="" type="password" />
-                <br />
                 You are....
                 <table>
                     <tr>
@@ -121,10 +122,46 @@
                         <td><input type="radio" value="4" name="cls" /></td>
                     </tr>
                 </table>
-                <button type="button" onclick="let ps = this.parentNode.pass.value; if (ps == '') { alert('empty password!'); return false; }; if (ps == this.parentNode.conf.value) { connect(0, this.parentNode.pass.value, this.parentNode.cls.value); close_modal(this); } else alert('Passwords are mismatch');">Registration</button>
+                <button id="reg_btn" type="button" onclick="let ps = this.parentNode.pass.value; if (ps == '') { alert('empty password!'); return false; }; if (ps == this.parentNode.conf.value) { connect(0, this.parentNode.pass.value, this.parentNode.cls.value); close_modal(this); } else alert('Passwords are mismatch');">START A NEW GAME</button>
+                <br /><br />
+                <span style="font-size: 10pt;">password (default: ff):</span>
+                <input name="pass" value="ff" type="password" style="font-size: 10pt;" />
+                <br /><span style="font-size: 10pt;">retype password:</span>
+                <input name="conf" value="ff" type="password" style="font-size: 10pt;" />
+                <br />
+            </form>
+            <hr />
+            <h2>or use existing account:</h2>
+            <form name="login" onsubmit="return false;">
+                Enter id: <br />
+                <input name="id" value="" />
+                <br /> Enter password: <br />
+                <input name="pass" value="" type="password" />
+                <br />
+                <button type="button" onclick="connect(this.parentNode.id.value, this.parentNode.pass.value); close_modal(this);">Login</button>
             </form>
         </div>
         <!-- end login/registration form -->
+        <!-- characters info -->
+        <div id="char_div" class="modal">
+            <span>Skills: </span>
+            <div id="skills_div"></div>
+            <form onsubmit="return false;" onkeydown="if (event.keyCode == 27) { close_pdiv(this);} event.stopPropagation();">
+                <button type="button" onclick="let el = get_ptag(this, 'DIV'); hide_elem(el);">close</button>
+            </form>
+        </div>
+
+        <!-- craft list -->
+        <div id="craft_div" class="modal">
+            <img src="img/items/12.png" ondblclick="send_data('#c12 0');close_pdiv(this);" />
+            <img src="img/items/14.png" ondblclick="send_data('#c14 1');close_pdiv(this);" />
+            <img src="img/items/16.png" ondblclick="send_data('#c16 1');close_pdiv(this);" />
+            <form onsubmit="return false;" onkeydown="if (event.keyCode == 27) {let el = get_ptag(this, 'DIV'); hide_elem(el)} event.stopPropagation();">
+                <button type="button" onclick="close_pdiv(this);">close</button>
+            </form>
+        </div>
+
+
         <!-- map -->
         <div ondrop="drop_inventory_img(); return false;" ondragover="return false;">
             <div style="">
@@ -141,17 +178,19 @@
             <div id="scream_map"></div>
         </div>
 
-
+        <!--
         <button type="button" onclick="send_data('#l');" class="int">&larr;</button>
         <button type="button" onclick="send_data('#m');" class="int">&uarr;</button>
         <button type="button" onclick="send_data('#r');" class="int">&rarr;</button>
+        -->
         <button type="button" onclick="send_data('#t');" class="int">&#8634;</button>
-        <br />
         <button type="button" onclick="send_data('#q');" class="int">exit</button>
         <!-- state bars -->
         <div class="ui_cont">
             <div class="ui">your id: <span id="id_label"></span>, hp: <span id="hp_label"></span></div>
             <form><input name="text" maxlength=60 value="hello"><button type="button" onclick="let frm = get_ptag(this, 'FORM'); send_data('#s' + frm.text.value);">say</button></form>
+            <a target="_blank" href="about.html">How to play</a>
+            <span id="dt_label"></span>
         </div>
 
         <!-- invenory (and opponent's) -->
@@ -193,15 +232,17 @@
         set_trade_mode(false);
 
         document.onkeydown = function () { key_press(event); };
-        //document.ontouchstart = function () { start_touch(event); };
+        document.ontouchstart = function () { start_touch(event); };
         //document.ontouchmove = function () { end_touch(event); };
+        document.ontouchend = function () { end_touch(event); };
+        //document.ontouchend = function () { alert('end'); };
 
 
         // CHANGE
         hide_elem(debug_div);
-        //document.forms.login.id.value = ;
 
-        document.forms['login'].id.focus();
+
+        document.forms['login'].pass.focus();
     </script>
 </body>
 </html>
