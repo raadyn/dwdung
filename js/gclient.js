@@ -15,10 +15,12 @@ let trade_mode = false;
 // player states:
 let id_label = null;        // element to show player id
 let hp_label = null;        // to show your hp
+let state_label = null;         // current state
 let inv_div = null;             // div for inventory
 let own_img = null;             // image of player
 let char_div = null;            // div for characteristics
 let craft_div = null;           // div for craft items
+let build_div = null;           // build list
 let kick_div = null;            // div for superkicks
 // trade:
 let sug_div = null;             // div for items that you suggest to trade
@@ -64,10 +66,12 @@ function init_client_elems()
     // player states:
     id_label = document.getElementById('id_label');
     hp_label = document.getElementById('hp_label');
+    state_label = document.getElementById('state_label');
     inv_div = document.getElementById('inv_div');
     log_div = document.getElementById('log_div');
     char_div = document.getElementById('char_div');
     craft_div = document.getElementById('craft_div');
+    build_div = document.getElementById('build_div');
     kick_div = document.getElementById('kick_div');
     hide_elem(char_div);
 
@@ -82,6 +86,11 @@ function init_client_elems()
     trade_res = document.getElementById('trade_result');
 
     vis_map = document.getElementById('vis_map');
+
+    // set some event listener
+    //let elem = document.getElementById('ui_cont');
+    //elem = elem.getElementsByClassName('input')[0];
+    //elem.addEventListener('keydown', function (e) { e.stopPropagation(); });
 };
 
 
@@ -675,6 +684,7 @@ function parse_self(txt)
     let x = Number(msg[0]);
     let y = Number(msg[1]);
     hp_label.innerHTML = msg[2];
+    state_label.innerHTML = state_names[parseInt(msg[3], 16)];    // print state (don't forget about 16-base)
 
     let rect = get_cell_coord(x + dx, y + dy, map, cell_size)
     if (own_img != null)
@@ -697,7 +707,7 @@ function key_press(event)
                 send_data('#l');
                 break;
             case 66: // b   // build command
-                send_data('#b');
+                show_modal(build_div);
                 break;
             case 67: // c
                 show_elem(char_div);
