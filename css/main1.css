@@ -40,6 +40,34 @@ form
     overflow-y: auto;
 }
 
+/* styles for positive and negative notes in log */
+.logpos {
+    color: #008000;
+}
+
+.logneg {
+    color: #DF2C34;
+}
+
+/*  style for floating text and positive and negative messages   */
+.fltext {
+    position: absolute;
+    transition: all 1s;
+    font-family: Verdana;
+    font-size: 14px;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+}
+
+.posit {
+    color: #008000;
+}
+
+.negat {
+    color: #DF2C34;
+}
+
 /* interface   */
 .ui_cont {
     width: 1000px;

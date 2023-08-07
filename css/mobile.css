@@ -4,13 +4,28 @@ body, p, input, label, a, button {
     margin: 0;
     padding: 0;
 }
+
 body {
     background-color: #fff2c9;
+    overscroll-behavior: none;
+    max-width: 100%;
+    overflow: hidden;
 }
+
 input {
     padding: 6px;
     border: 1px solid #000;
 }
+
+input[type=submit] {
+        border-radius: 20px;
+        padding: 8px;
+        cursor: pointer;
+        background-color: #fff;
+        border: 1px solid green;
+}
+
+
 button {
     border-radius: 20px;
     padding: 8px;
@@ -19,16 +34,16 @@ button {
     border: 1px solid green;
 }
 
-/* interface button */
-.int
-{
-    width: 90px;
-    height: 90px;
-}
-
 button:hover {
     background-color: #96fd96;
 }
+
+/* interface button */
+.int {
+    width: 50px;
+    height: 50px;
+}
+
 form {
     margin: 0;
     padding: 0;
@@ -39,36 +54,81 @@ form {
     overflow-y: auto;
 }
 
-/* interface   */
-.ui_cont {
+/* try to incrase arrows for edit with type=number */
+/* For WebKit-based browsers */
+input[type=number]::-webkit-inner-spin-button,
+input[type=number]::-webkit-outer-spin-button {
+    -webkit-appearance: none;
+    height: 16px;
+    width: 16px;
+}
+
+/* For Firefox */
+input[type=number]::-moz-inner-spin-button,
+input[type=number]::-moz-outer-spin-button {
+    height: 16px;
+    width: 16px;
+}
+
+/* styles for positive and negative notes in log */
+.logpos {
+    color: #008000;
+}
+
+.logneg {
+    color: #DF2C34;
+}
+
+/*  style for floating text and positive and negative messages   */
+.fltext {
+    position: absolute;
+    transition: all 1s;
+    font-family: Verdana;
+    font-size: 14px;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+}
+
+.posit {
+    color: #008000;
+}
+
+.negat {
+    color: #DF2C34;
+}
+
+#main_menu {
     width: 100%;
-    height: 50px;
+    height: 30px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    background-color: #E0FFFF;
+}
+
+#main_menu span:hover {
+}
+
+#main_menu span
+{
+    margin: 5px;
+}
+
+#main *
+{
+    user-select: none;
+}
+
+/* class for elements with absolute 0 0 position */
+.abs {
+    position: absolute;
+    top: 0px;
+    left: 0px;
+}
+
+#opponent_div  {
     margin: 10px 0;
-    border: 1px solid #000;
-    background-color: #fff;
-}
-.ui {
-    text-align: center;
-    margin-right: 50px;
-}
-.ui, .ui_cont form {
-    display: inline-block;
-    line-height: 50px;
-    vertical-align: middle;
-}
-.ui_cont form input {
-    margin: 0;
-    margin-right: 10px;
-}
-.ui span {
-    display: inline-block;
-    min-width: 45px;
-    font-weight: bold;
-    text-align: left;
-}
-#opponent_div, .logs {
-    margin: 10px 0;
-    width: 100%;
     border: 1px solid #000;
     background-color: #fff;
 }
@@ -79,7 +139,7 @@ form {
     border-collapse: collapse;
     border: none;
     border-spacing: 0px;
-    margin-top: 10px;
+    margin-top: 0px;
 }
 
  .maptable td 
@@ -89,17 +149,27 @@ form {
         border: none;
  }
 
-/* style for image which can hide another image by "fog" */
-.fogimg 
-{
-    margin-top: -40px;
-    margin-left: -40px;
+/* general class for div with items, it may contain images of items and samp for their number */
+.itemlst {
+    width: 54px;
+    border: 1px solid gray;
+    height: 540px;
+    overflow: auto;
 }
 
 /* div for inventory */
-.invdiv 
-{
-    border: 1px solid black;
+.invdiv {
+    float: left;
+}
+
+.itemlst img {
+    width: 50px;
+    height: 50px;
+    margin-bottom: -15px;
+}
+
+.itemlst samp {
+    background-color: #E0FFFF;
 }
 
 /* div for suggested for trade items */
@@ -109,7 +179,7 @@ form {
     height: 80px;
     /* background-color: antiquewhite; */
 }
-.suginvdiv#opsug_div {
+.suginvdiv #opsug_div {
     border-bottom: none;
     border-top: 1px solid black;
 }
@@ -120,11 +190,20 @@ form {
     border: 2px solid red;
 }
 
+/* help */
+.help_page {
+    display: none;
+}
+
+.help_page.active {
+        display: block;
+}
+
 /* styles for different languages  */
 /* 0 = no language, sounds  */
 .lang0
 {
-    color: black;
+    color: #101010;
 }
 
 /* 1 = human  */
