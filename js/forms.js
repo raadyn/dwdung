@@ -49,7 +49,6 @@ function enter_number(window, numb, func)
     //modal_mode = true;
 };
 
-
 // confirm entered in modal window value and call function with this value
 // return false to stop sending form
 function confirm_val(obj)

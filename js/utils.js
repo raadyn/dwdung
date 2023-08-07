@@ -8,7 +8,8 @@ function add_child(tag, txt, cls, parent, at_first = false)
 {
     let elem = document.createElement(tag);
     elem.innerHTML = txt;
-    elem.className = cls;
+    if (cls)
+        elem.className = cls;
     if (at_first)
     {
         let first = parent.firstChild;
@@ -35,10 +36,11 @@ function add_img(src, cls, parent)
 {
     let img = document.createElement('img');
     img.src = src;
-    img.className = cls;
+    if (cls)
+        img.className = cls;
     parent.appendChild(img);
     return img;
-}
+};
 
 function add_child_coord(x, y, tag, txt, cls, parent)
 // add child to DOM element with desired absolute coordinates
@@ -118,6 +120,15 @@ function fill_table_cont(width, height, cls, cont, tabl)
     tabl.innerHTML = rows;
 };
 
+// fill images in table cells [x0,y0,xn,yn) with given src
+function fill_table_rect(table, x0, y0, xn, yn, src)
+{
+    let i, j;
+    for (i = x0; i < xn; i++)
+        for (j = y0; j < yn; j++)
+            table.rows[j].cells[i].firstChild.src = src;
+};
+
 function shift_coord(coord, delta)
 // change coordinates of object on delta px
 {
@@ -188,31 +199,7 @@ function shift_table_cont(dx, dy, cls, cont, table)
 // search cell of the table
 function find_cell(x, y, table)
 {
-    //alert(table);
-    //alert('coord=' + String(x) + ',' + String(y));
-
-    // old variant:
-    //let row = table.getElementsByTagName('tr')[y];
-    //return row.getElementsByTagName('td')[x];
-
-    // new variant:
     return table.rows[y].cells[x];
-
-    // new variant with verification:
-    /*  
-    if ((y >= 0) && (y < table.rows.length))
-    {
-        let row = table.rows[y];
-        if ((x >= 0) && (x < row.cells.length))
-            return row.cells[x];
-        else
-            return null;
-        //alert('seek ' + x + ' rows in table');
-    }
-    else
-        return null;
-        //alert('seek ' + y + ' rows in table');
-     */   
 };
 
 
@@ -223,7 +210,7 @@ function get_ptag(obj, tagname)
     while ((node != null) && (node.tagName != tagname))
         node = node.parentNode;
     return node;
-}
+};
 
 // split txt into an array by the specified  delimiter (split_symb) and then each element into subarray (by inern_split delimiter),
 // iterate by the first array and call func with subarray parameter
@@ -243,3 +230,33 @@ function parse_iterator(split_symb, intern_split, txt, func)
         func(i, arr, arguments[4], arguments[5], arguments[6], arguments[7]);
     }
 };
+
+function create_floating_text(text, height, cls = false, x = false, y = false, speed=20)
+{
+    // Create a new div element for the floating text
+    const div = document.createElement('div');
+    div.textContent = text;
+
+    // Set the CSS properties of the floating text
+    if (x)
+        div.style.left = x + 'px';
+    if (y)
+        div.style.top = y + 'px';
+
+    if (cls)
+        div.className = cls;
+
+    // Add the floating text to the document body
+    document.body.appendChild(div);
+
+    // Move the floating text up and fade it out
+    setTimeout(() => {
+        div.style.transform = 'translateY(' + height + 'px)';
+        //div.style.opacity = 0;
+    }, speed);
+
+    // Remove the floating text from the document body after 2 seconds
+    setTimeout(() => {
+        div.remove();
+    }, 1000);
+}

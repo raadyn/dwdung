@@ -38,9 +38,11 @@ let vis_map = null;             // <table> for visibility
 let numb_input = null;      // div with form for entering numbers
 let drag_img = null;        // dragged image from inventory
 
-
 // client data
 let vis_imgs = new Array();      // (visible images) array of images, which we need empty.png -> fog.png
+
+// some client coorinates
+//let msg_x, msg_y;               // coordinates for floating message
 
 // functions:
 function connect(login, passw, cls = 0)
@@ -118,38 +120,47 @@ async function send_data(cmd)
 
 };
 
-function set_trade_mode(mode)
-// switch trade mode
+function set_trade_mode(mode, mobile)
+// switch trade mode (use mobile=true for mobile browsers)
 {
     trade_mode = mode;
     if (trade_mode) {
 
-        show_elem(sug_div);
-        show_elem(opsug_div);
-        show_elem(trade_div);
-        show_elem(trade_btn);
+        if (!mobile) {
+            show_elem(sug_div);
+            show_elem(opsug_div);
+            show_elem(trade_div);
+            show_elem(trade_btn);
 
-        hide_elem(agree_btn);
-        hide_elem(ask_btn);
-        trade_res.innerHTML = '';
-        show_elem(trade_res);
+            hide_elem(agree_btn);
+            hide_elem(ask_btn);
+            trade_res.innerHTML = '';
+            show_elem(trade_res);
 
-        show_elem(opponent_div);
+            show_elem(opponent_div);
+        }
+        else
+            show_elem(trade_div);
+
     }
     else
     {
-        hide_elem(sug_div);
-        hide_elem(opsug_div);
-        hide_elem(trade_div);
-        hide_elem(trade_btn);
-        hide_elem(trade_res);
-        hide_elem(agree_btn);
+        if (!mobile) {
+            hide_elem(sug_div);
+            hide_elem(opsug_div);
+            hide_elem(trade_div);
+            hide_elem(trade_btn);
+            hide_elem(trade_res);
+            hide_elem(agree_btn);
 
-        clear_childs(sug_div);
-        clear_childs(opsug_div);
-        clear_childs(trade_div);
+            clear_childs(sug_div);
+            clear_childs(opsug_div);
+            clear_childs(trade_div);
 
-        hide_elem(opponent_div);
+            hide_elem(opponent_div);
+        }
+        else
+            hide_elem(trade_div);
     }
 }
 
@@ -167,9 +178,7 @@ function add_invent_img(index, number, src, parent, eq, mx = 0)
     img.setAttribute('data-index', index);              // index of the item in the inventory
     img.setAttribute('data-number', n);                 // quantinty of items
 
-    let label = add_child('samp', n, '', parent);
-    label.style.left = img.left + 5;
-    label.style.top = img.top + 5;
+    add_child('samp', n, '', parent);
 
     return img;
 };
@@ -192,6 +201,24 @@ function remove_invent_img(img)
     del_obj(img.nextSibling);
     del_obj(img);
     hide_elem(agree_btn);
+};
+
+function remove_sug_items(numb, img)
+// remove some number of items form suggestion list by img and number
+{
+    // for compability we need to use data from global variable drag_img
+    let mx = Number(img.getAttribute('data-number'));
+
+    if (numb >= mx)     // remove all
+    {
+        del_obj(img.nextSibling);   // remove <samp> with number
+        del_obj(img);               // remove img
+    }
+    else
+    {
+        img.setAttribute('data-number', mx - numb);
+        img.nextSibling.innerHTML = mx - numb;          // change text in near span
+    }
 };
 
 function change_invent_img(diff, img)
@@ -221,6 +248,12 @@ function drop_item(n, obj)
 // send command to drop item by its image and number
 {
     send_data('#d' + dec_to_hex(obj.getAttribute('data-index')) + ' ' + dec_to_hex(n));
+};
+
+function drop_item_by_index(n, ind)
+// send command to drop item by its index and number
+{
+    send_data('#d' + dec_to_hex(ind) + ' ' + dec_to_hex(n));
 };
 
 function drop_item_click(item_img)
@@ -310,6 +343,32 @@ function drop_inventory_img()
     drag_img = null;
 };
 
+function parse_item_lst(txt, parent, event, func)
+// fill parent by <img> and <samp> with func function on event
+// txt: %x %x [0/1]|%x %x [0/1] ... -> <img with attributes ><samp>numb</samp>
+{
+    // delete all old objects:
+    clear_childs(parent);
+
+    let items = txt.split('|');
+    let data, ident, numb, img, src, eq;
+    for (let i = 0; i < items.length - 1; i++)
+    {
+        if (items[i] == '')
+            continue;
+
+        data = items[i].split(' ');
+        ident = data[0];
+        numb = parseInt(data[1], 16);   // don't forget about 16-base
+        eq = (data[2] == '1');       // equip or not
+        src = img_dir + 'items/' + ident + '.png';
+
+        img = add_invent_img(i, numb, src, parent, eq);     // function add image with necessary attributes and <samp> with number
+        if (event)
+            img.addEventListener(event, function () { func(this); });
+    }
+};
+
 function parse_inventory(txt, parent, mobile=false)
 // sug_list is an object for item suggesting
 //! use iterator here!
@@ -331,11 +390,16 @@ function parse_inventory(txt, parent, mobile=false)
         src = img_dir + 'items/' + ident + '.png';
 
         img = add_invent_img(i, numb, src, parent, eq);
-        img.ondblclick = function () { apply_inventory_img(this); };
-        img.ondragstart = function () { drag_img = this; };
         //img.onclick = function () { add_item_list(this, sug_list); };
         if (mobile)
-            img.onclick = function () { mobile_click(this); }
+        {
+            img.ontouchstart = function () { mobile_invent_click(this); };
+        }
+        else
+        {
+            img.ondblclick = function () { apply_inventory_img(this); };
+            img.ondragstart = function () { drag_img = this; };
+        }
     }
 };
 
@@ -363,6 +427,34 @@ function parse_suggestion(txt, div)
         img = add_invent_img(ind, numb, src, div, 0);
         img.ondblclick = function () { remove_invent_img(this); };
     }
+};
+
+function send_img_to_itemlist(img, numb, dest, event, func)
+// add item image to another list (dest), with number restriction.
+// if such img already presented, the number increasen by numb
+{
+    let x;
+    let ind = img.getAttribute('data-index');
+    let avail_numb = Number(img.getAttribute('data-number'));
+    let cur_numb;
+
+    let els = dest.getElementsByTagName('img');
+    for (let i = 0; i < els.length; i++)
+        if (els[i].getAttribute('data-index') == ind)
+        {
+            cur_numb = Number(els[i].getAttribute('data-number'));
+            x = Math.min(cur_numb + numb, avail_numb);
+            els[i].setAttribute('data-number', x);
+            els[i].nextSibling.innerHTML = x;          // change text in near <samp>
+
+            return;
+        }
+
+    // this item was not added yet, so add it:
+    x = Math.min(avail_numb, numb);
+    let new_img = add_invent_img(ind, x, img.src, dest, 0, 0);
+    if (event)
+        new_img.addEventListener(event, function () { func(this); });
 };
 
 function suggest_invent_img(img, parent)
@@ -499,12 +591,12 @@ function parse_viewcell(ind, arr, xs, ys, zs, minmaxes)
             zs.push(['c', arr[2]]);       // update ground_map and clear map_map
             break;
 
-        case 'o':   // interactive object (x y ident), just place at map, because it can't be send without ground
-            zs.push(['o', arr[2]]);       // update map_map by objs
+        case 'o':   // interactive object (x y ident), just place at map, because it can't be send without ground ground
+            zs.push(['o', arr[2], arr[3]]);       // update map_map by objs
             break;
 
-        case 'w':    // wall x y look
-            zs.push(['w', arr[2]]);       // update map_map by walls
+        case 'w':    // wall x y look ground
+            zs.push(['w', arr[2], arr[3]]);       // update map_map by walls
             break;
 
         case 'p':  // person: ident x y look dir state
@@ -552,6 +644,23 @@ function set_cell_img(x, y, table, src)
     }
     return null;
 };
+
+function set_cell_img_rot(x, y, table, src, dir)
+// the same as set_cell_img, but with rotation
+{
+    let cell = find_cell(x, y, table);
+    if (cell != null) {
+        let elems = cell.getElementsByTagName('img');
+        elems[0].src = src;
+        if (dir > 0) {
+            let angl = String(dir * 90);
+            elems[0].style.transform = 'rotate(' + angl + 'deg)';
+        }
+        return elems[0];
+    }
+    return null;
+};
+
 
 // value of additional shift when you are close to border of the map
 const add_shift = 3;
@@ -612,20 +721,6 @@ function parse_viewmap(txt)
 
     if (need_shift)
     {
-        /*
-        let sh1 = setTimeout(shift_images, 100, -shx, -shy, cell_size, persons);
-        let sh2 = setTimeout(shift_images, 100, -shx, -shy, cell_size, floor_objs);
-        let sh3 = setTimeout(shift_images, 100, -shx, -shy, '', map_content, map);
-        let sh4 = setTimeout(shift_images, 100, -shx, -shy, '', '<img src="' + img_dir + 'map/empty.png" />', wall_map);
-        let sh5 = setTimeout(shift_images, 100, -shx, -shy, '', '<img src="' + img_dir + 'map/dark.png" />', vis_map);
-        */
-
-        /*
-        const [res1, res2, res3, res4, res5] = Promise.all([shift_images(-shx, -shy, cell_size, persons), shift_images(-shx, -shy, cell_size, floor_objs),
-            shift_table_cont(-shx, -shy, '', map_content, map), shift_table_cont(-shx, -shy, '', '<img src="' + img_dir + 'map/empty.png" />', wall_map),
-            shift_table_cont(-shx, -shy, '', '<img src="' + img_dir + 'map/dark.png" />', vis_map)]);
-        */
-
         //let i;
         //for (i = 0; i < 3; i++)
         {
@@ -651,18 +746,17 @@ function parse_viewmap(txt)
                 case 'c':
                     // clear wall map
                     set_cell_img(x, y, wall_map, img_dir + 'map/empty.png');
-                    // no break => the next point also will be executed
-                case 'g':
-                    // update ground image
                     set_cell_img(x, y, map, img_dir + 'map/' + zs[i][1] + '.gif');
                     break;
 
                 case 'o':
                     set_cell_img(x, y, wall_map, obj_dir + zs[i][1] + '.gif');
+                    set_cell_img(x, y, map, img_dir + 'map/' + zs[i][2] + '.gif');
                     break;
 
                 case 'w':
                     set_cell_img(x, y, wall_map, wall_dir + zs[i][1] + '.gif');
+                    set_cell_img(x, y, map, img_dir + 'map/' + zs[i][2] + '.gif');
                     break;
             }
 
@@ -771,7 +865,7 @@ async function parse_response(txt)
 
     debug_div.innerHTML = txt;
     let commands = txt.split('{');
-    let cmd, vars, img, id, val;
+    let cmd, vars, img, id, val, msg;
     for (let i = 0; i < commands.length; i++)
     {
         cmd = commands[i];
@@ -837,7 +931,10 @@ async function parse_response(txt)
                 for (let j = 1; j < commands[i].length; j++)
                 {
                     img = add_img(img_dir + 'kick' + commands[i][j] + '.png', '', kick_div);
-                    img.onclick = function () { send_data("#k" + commands[i][j]); };
+                    if (mobile_mode)
+                        img.ontouchstart = function () { send_data("#k" + commands[i][j]); };
+                    else
+                        img.onclick = function () { send_data("#k" + commands[i][j]); };
                 }
                 parse_inventory(commands[i].slice(1), inv_div, mobile_mode);
                 break;
@@ -846,23 +943,40 @@ async function parse_response(txt)
                 id = parseInt(vars[0], 16);
                 switch (id)
                 {
-                    case 0:
-                        add_child('p', std_messages[id], '', log_div, true);
+                    case 0:     // you died
+                        add_child('p', std_messages[id], 'logneg', log_div, true);
+                        create_floating_text(std_messages[id], 150, 'fltext negat');
+
+                        // hide screen:
                         //! probably, it's not optimal, because we need only reset <img.src>
-                        fill_table_cont(map_width, map_height, '', map_content, map);
-                        fill_table_cont(map_width, map_height, '', '<img src="' + img_dir + 'map/empty.png" />', wall_map);
-                        fill_table_cont(map_width, map_height, '', '<img src="' + img_dir + 'map/dark.png" />', vis_map);
+                        //fill_table_cont(map_width, map_height, '', map_content, map);
+                        //fill_table_cont(map_width, map_height, '', '<img src="' + img_dir + 'map/empty.png" />', wall_map);
+                        //fill_table_cont(map_width, map_height, '', '<img src="' + img_dir + 'map/dark.png" />', vis_map);
+                        fill_table_rect(vis_map, 0, 0, map_width, map_height, img_dir + 'map/dark.png');
+
                         set_trade_mode(false);
                         break;
-                    case 1:
-                        add_child('p', std_messages[id].replace('{}', parseInt(vars[1], 16)), '', log_div, true);
+                    case 1:     // obtain dmg
+                        msg = std_messages[id].replace('{}', parseInt(vars[1], 16))
+                        add_child('p', msg, 'logneg', log_div, true);
+                        create_floating_text(msg, 150, 'fltext negat');
                         break;
-                    case 2:
-                        add_child('p', std_messages[id].replace('{}', skill_names[parseInt(vars[1], 16)]), '', log_div, true);
+                    case 2:     // skill ++
+                        msg = std_messages[id].replace('{}', skill_names[parseInt(vars[1], 16)]);
+                        add_child('p', msg, 'logpos', log_div, true);
+                        create_floating_text(msg, 150, 'fltext posit');
                         break;
-                    case 3:
-                    case 4:
-                        add_child('p', std_messages[id], '', log_div, true);
+                    case 3:     // no room
+                    case 4:     // no ingridents
+                    case 5:     // your tool is broken
+                        msg = std_messages[id];
+                        add_child('p', msg, 'logneg', log_div, true);
+                        create_floating_text(msg, 150, 'fltext negat');
+                        break;
+                    case 6:     // an item was created
+                        msg = std_messages[id];
+                        add_child('p', msg, 'logpos', log_div, true);
+                        create_floating_text(msg, 150, 'fltext posit');
                         break;
                 }
                 break;
@@ -872,22 +986,43 @@ async function parse_response(txt)
                 parse_suggestion(cmd.slice(1), opsug_div);
                 break;
             case 'q':
-                console.log('obtain quit');
                 source.close();
-                alert('quit!');
+                //alert('quit!');
+                create_floating_text('you\'ve just logout', 150, 'flneg');
+                add_child('p', 'you\'ve just logout', 'logneg', log_div, true);
+                if (mobile_mode)
+                {
+                    let sp = document.getElementById('main_menu').getElementsByTagName('span')[2];
+                    sp.innerHTML = 'Start';
+                    sp.ontouchstart = function () { location.reload(); };
+
+                }
                 break;
             case 'r':       // scream
-                parse_scream_pl(commands[i].slice(1));
+                if (mobile_mode)
+                    parse_scream_pl_mobile(commands[i].slice(1));
+                else
+                    parse_scream_pl(commands[i].slice(1));
                 break;
             case 's':
-                parse_self(commands[i].slice(1));
+                if (mobile_mode)
+                    parse_self_mobile(commands[i].slice(1));
+                else
+                    parse_self(commands[i].slice(1));
                 break;
             case 't':       // inventory of trader
+                console.log(commands[i].slice(1));
                 set_trade_mode(true);
-                parse_inventory(commands[i].slice(1), trade_div);
+                if (mobile_mode)
+                    parse_item_lst(commands[i].slice(1), trade_div, 'touchstart', mobile_trader_click);
+                else
+                    parse_inventory(commands[i].slice(1), trade_div);
                 break;
             case 'v':
-                parse_viewmap(cmd.slice(1));
+                if (mobile_mode)
+                    parse_viewmap_mobile(cmd.slice(1));
+                else
+                    parse_viewmap(cmd.slice(1));
                 break;
             default:        // log unknown directive
                 //console.log('unkn=' + cmd);
