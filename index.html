@@ -109,6 +109,10 @@
             <img src="img/items/12.png" ondblclick="send_data('#c12 0');close_pdiv(this);" />
             <img src="img/items/14.png" ondblclick="send_data('#c14 1');close_pdiv(this);" />
             <img src="img/items/16.png" ondblclick="send_data('#c16 1');close_pdiv(this);" />
+            <img src="img/items/19.png" title="a pickaxe mold: 2 clay" ondblclick="send_data('#c19 1');close_pdiv(this);" />
+            <img src="img/items/1a.png" title="an axe mold: 2 clay" ondblclick="send_data('#c1a 1');close_pdiv(this);" />
+            <img src="img/items/3.png" title="a pickaxe: pickaxe head + stick" ondblclick="send_data('#c3 1');close_pdiv(this);" />
+            <img src="img/items/7.png" title="an axe: axe head + stick" ondblclick="send_data('#c7 1');close_pdiv(this);" />
             <form onsubmit="return false;" onkeydown="if (event.keyCode == 27) {let el = get_ptag(this, 'DIV'); hide_elem(el)} event.stopPropagation();">
                 <button type="button" onclick="close_pdiv(this);">close</button>
             </form>
@@ -118,6 +122,7 @@
         <div id="build_div" class="modal">
             <img src="img/objs/3.gif" ondblclick="send_data('#b1');close_pdiv(this);" />
             <img src="img/wall/9.gif" ondblclick="send_data('#b2');close_pdiv(this);" />
+            <img src="img/objs/7.gif" title="a foundry: 10 bricks" ondblclick="send_data('#b3');close_pdiv(this);" />
             <form onsubmit="return false;" onkeydown="if (event.keyCode == 27) {let el = get_ptag(this, 'DIV'); hide_elem(el)} event.stopPropagation();">
                 <button type="button" onclick="close_pdiv(this);">close</button>
             </form>

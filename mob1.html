@@ -17,8 +17,13 @@
         //let serv_addr = 'http://127.0.0.1:2008?id=';
         let serv_addr = 'https://gobl.quant.su?id=';
         // CHANGE
-        const map_width = 8;
-        const map_height = 14;
+        let map_width = 8;      //! now, numbers are calculated
+        let map_height = 14;
+
+
+        // CONSTANTS:
+        const DOUBLE_CLICK_TIME = 200;
+
 
         // client settings:
         let img_dir = 'img/';
@@ -33,6 +38,8 @@
         let obj_numb = 0;   // object number - for click on an item in inventory
         let some_obj = null;        // some html element for some needs
         let mobile_mode = true;
+
+        let cur_help_page = 0;      // current help page
 
 
         // coordinates shift
@@ -74,8 +81,7 @@
                 send_data('#m');
         };
 
-        function mobile_click(obj)
-        {
+        function mobile_click(obj) {
             let currentTime = new Date().getTime();
             let timeSinceLastClick = currentTime - last_click_time;
             //alert(timeSinceLastClick);
@@ -84,7 +90,7 @@
             {
                 apply_inventory_img(obj);
             }
-            
+
             last_click_time = currentTime;
         }
 
@@ -93,24 +99,104 @@
 
             // emulation of double click
             if (some_obj == obj)
-                if (cur_time - last_click_time < 200)   // 200 ms
+                if (cur_time - last_click_time < DOUBLE_CLICK_TIME)         // DOUBLE_CLICK_TIME miliseconds
                 {
                     obj_ind = obj.getAttribute('data-index');              // index of the item in the inventory
                     obj_numb = Number(obj.getAttribute('data-number'));                 // quantinty of items
-                    show_modal(use_div);
+                    if (trade_mode) {
+                        if (obj_numb > 1) {
+                            enter_number(numb_input, obj_numb, test2);
+                        }
+                        else
+                            send_img_to_itemlist(some_obj, obj_numb, sug_div, 'touchstart', mobile_suggestion_click);
+                    }
+                    else
+                        show_modal(use_div);
                 }
                 else
                     last_click_time = cur_time;
-            else
-            {
+            else {
                 some_obj = obj;
                 last_click_time = cur_time;
             }
         }
 
-        // function for rotating of different table content        
-        function rot_map_tables(gr_tab, w_tab, v_tab, x0, y0, angl, width, height)
+
+        //! temp function to add img to opsuglist
+        function test1(n, ind)
+        // send command to drop item by its index and number
         {
+            send_img_to_itemlist(some_obj, n, opsug_div, 'touchstart', mobile_suggestion_click);
+            hide_elem(agree_btn);       // any changes in suggestion list cancel agree btn
+        };
+        function test2(n, ind)
+        // send command to drop item by its index and number
+        {
+            send_img_to_itemlist(some_obj, n, sug_div, 'touchstart', mobile_suggestion_click);
+            hide_elem(agree_btn);   // any changes in suggestion list cancel agree btn
+        };
+        function remove_some_sug(n, ind)
+        // send command to drop item by its index and number
+        {
+            remove_sug_items(n, some_obj);
+        };
+
+
+        // function which called if we click on trader invent
+        function mobile_trader_click(obj) {
+            let cur_time = new Date().getTime();
+
+            // emulation of double click
+            if (some_obj == obj)
+                if (cur_time - last_click_time < DOUBLE_CLICK_TIME)
+                {
+                    obj_ind = obj.getAttribute('data-index');              // index of the item in the inventory
+                    obj_numb = Number(obj.getAttribute('data-number'));                 // quantinty of items
+                    //show_modal(use_div);
+                    if (obj_numb > 1) {
+
+                        enter_number(numb_input, obj_numb, test1);
+                    }
+                    else
+                        send_img_to_itemlist(obj, obj_numb, opsug_div, 'touchstart', mobile_suggestion_click);
+                }
+                else
+                    last_click_time = cur_time;
+            else {
+                some_obj = obj;
+                last_click_time = cur_time;
+            }
+        }
+
+        // function which called if we click on one of items in one of suggestion list
+        function mobile_suggestion_click(obj) {
+            let cur_time = new Date().getTime();
+
+            // emulation of double click
+            if (some_obj == obj)
+                if (cur_time - last_click_time < DOUBLE_CLICK_TIME)
+                {
+                    obj_numb = Number(obj.getAttribute('data-number'));                 // quantinty of items
+                    //show_modal(use_div);
+                    if (obj_numb > 1) {
+
+                        enter_number(numb_input, obj_numb, remove_some_sug);
+                    }
+                    else
+                        remove_sug_items(1, obj);
+                    hide_elem(agree_btn);
+                }
+                else
+                    last_click_time = cur_time;
+            else {
+                some_obj = obj;
+                last_click_time = cur_time;
+            }
+        }
+
+
+        // function for rotating of different table content
+        function rot_map_tables(gr_tab, w_tab, v_tab, x0, y0, angl, width, height) {
             // gr_tab, w_tab and v_tab are ground-, wall- and visible tables
             let i, j;
             let a, b, new_x, new_y;
@@ -140,8 +226,7 @@
             let gimgs = new Array(width);
             let wimgs = new Array(width);
             let vimgs = new Array(width);
-            for (i = 0; i < width; i++)
-            {
+            for (i = 0; i < width; i++) {
                 gimgs[i] = new Array(height);
                 wimgs[i] = new Array(height);
                 vimgs[i] = new Array(height);
@@ -197,8 +282,7 @@
         };
 
 
-        function get_img_size(url)
-        {
+        function get_img_size(url) {
             let w, h;
             let img = new Image;
             img.src = url;
@@ -307,7 +391,7 @@
                     //console.log(ident + ':' + src);
                     break;
 
-                case 'f':   // floor: ident x y look 
+                case 'f':   // floor: ident x y look
                     if (floor_objs.has(ident)) // there is this floor obj already
                     {
                         upd_img(ident, cell[0], cell[1], app_dir[cur_dir][0], floor_objs);
@@ -337,12 +421,11 @@
             // hide old vision
             // this variant doesn't work for mobile
             //for (i = 0; i < vis_imgs.length; i++)
-              //  vis_imgs[i].src = img_dir + 'map/fog.png';
+            //  vis_imgs[i].src = img_dir + 'map/fog.png';
             //vis_imgs.length = 0;
             // insted of this, just very stupid variant:
             for (i = 0; i < map_width; i++)
-                for (j = 0; j < map_height; j++)
-                {
+                for (j = 0; j < map_height; j++) {
                     img = vis_map.rows[j].cells[i].firstChild;
                     if (img.src.indexOf('empty.png') > 0)
                         img.src = img_dir + 'map/fog.png';
@@ -356,8 +439,7 @@
             clear_images(floor_objs);
 
 
-            for (i = 0; i < xs.length; i++)
-            {
+            for (i = 0; i < xs.length; i++) {
                 x0 = xs[i] - sx;
                 y0 = ys[i] - sy;
                 x = Math.round(x0 * cos_ang + y0 * sin_ang + 0.5) + (map_width / 2) - 1;
@@ -386,7 +468,7 @@
 
                     // doesn't work in mobile logic
                     //if (img != null)
-                      //  vis_imgs.push(img);
+                    //  vis_imgs.push(img);
                 }
             }
         };
@@ -405,7 +487,32 @@
             let shx, shy;
             nsx = Number(msg[0]) + 0.5;
             nsy = Number(msg[1]) + 0.5;
-            let wh2 = (map_height - map_width) / 2;
+
+            // calculate rotation settings. 
+            //! it can be done once in determining some variables
+            let rot_size, rot_x, rot_y, c1_x, c1_y, c2_x, c2_y;
+            if (map_height > map_width) {
+                rot_size = map_width;
+                rot_x = 0;
+                rot_y = (map_height - map_width) / 2;
+                // coordinates of clearing 1: 0, 0, map_width, rot_y
+                c1_x = map_width;
+                c1_y = rot_y;
+                // coordinates of clearing 2: 0, rot_x + map_width, map_width, map_height
+                c2_x = 0;
+                c2_y = rot_x + map_width;
+            }
+            else {
+                rot_size = map_height;
+                rot_x = (map_width - map_height) / 2;
+                rot_y = 0;
+                // coordinates of clearing 1: 0, 0, rot_x, map_height
+                c1_x = rot_x;
+                c1_y = map_height;
+                // coordinates of clearing 2: rot_y + map_height, 0, map_width, map_height
+                c2_x = rot_y + map_height;
+                c2_y = 0;
+            }
 
             if (cur_dir == null)    // the first time obtained info
             {
@@ -413,15 +520,14 @@
                 sy = nsy;
                 cur_dir = dir;
             }
-            else 
-            if (dir != cur_dir)
-            {
-                let ddir = delt_dir[cur_dir][dir];
-                rot_map_tables(map, wall_map, vis_map, 0, wh2, ddir, map_width, map_width);
-                fill_table_rect(vis_map, 0, 0, map_width, wh2, img_dir + '/map/dark.png');
-                fill_table_rect(vis_map, 0, wh2 + map_width, map_width, map_height, img_dir + '/map/dark.png');
-                cur_dir = dir;
-            }
+            else
+                if (dir != cur_dir) {
+                    let ddir = delt_dir[cur_dir][dir];
+                    rot_map_tables(map, wall_map, vis_map, rot_x, rot_y, ddir, rot_size, rot_size);
+                    fill_table_rect(vis_map, 0, 0, c1_x, c1_y, img_dir + '/map/dark.png');
+                    fill_table_rect(vis_map, c2_x, c2_y, map_width, map_height, img_dir + '/map/dark.png');
+                    cur_dir = dir;
+                }
 
             switch (cur_dir) {
                 case 0: // from 0 to 3
@@ -442,9 +548,8 @@
                     break;
             }
 
-            
-            if (nsx != sx)
-            {
+
+            if (nsx != sx) {
                 shx = -(nsx - sx) * cos_ang;
                 shy = (nsx - sx) * sin_ang;
                 shift_table_cont(-shx, -shy, '', map_content, map);
@@ -454,8 +559,7 @@
                 shift_images(shx, shy, cell_size, floor_objs);
                 sx = nsx;
             }
-            if (nsy != sy)
-            {
+            if (nsy != sy) {
                 shx = -(nsy - sy) * sin_ang;
                 shy = -(nsy - sy) * cos_ang;
                 shift_table_cont(-shx, -shy, '', map_content, map);
@@ -471,57 +575,109 @@
             // so we need to define right dx and dy to place floors, persons and sounds at correct coordinates
             dx = -sx * cos_ang - sy * sin_ang + 0.5 + (map_width / 2) - 1;
             dy = -sy * cos_ang + sx * sin_ang + 0.5 + (map_height / 2) - 1;
-            
+
             hp_label.innerHTML = msg[2];
-            state_label.innerHTML = state_names[parseInt(msg[3], 16)];    // print state (don't forget about 16-base)
+            let state = parseInt(msg[3], 16);       // state of our person
+            state_label.innerHTML = state_names[state];    // print state (don't forget about 16-base)
+            if (trade_mode)
+                if (state != 10)    // csReadyTrade
+                    set_trade_mode(false);
+
+            // view state animation:
+            click_map.rows[map_height / 2].cells[map_width / 2].firstChild.src = img_dir + 'st' + state + '.gif';
+
 
             // add own image at the map center (constant):
-            if (own_img == null)
-            {
+            if (own_img == null) {
                 let rect = get_cell_coord(map_width / 2 - 1, map_height / 2 - 1, map, cell_size)
                 own_img = put_img(rect[0], rect[1], 3, img_dir + 'pl' + rc + '.png', pers_map);
             }
         };
 
+        function show_next_help()
+        {
+            let pages = document.querySelectorAll('.help_page');
+            if ((cur_help_page + 1) < pages.length)
+            {
+                pages[cur_help_page].classList.remove('active');
+                cur_help_page++;
+                pages[cur_help_page].classList.add('active');
+                document.getElementById('prev_help_btn').disabled = false;
+                if (cur_help_page > pages.length - 2)
+                    document.getElementById('next_help_btn').disabled = true;
+            }
+        };
+
+        function show_prev_help()
+        {
+            let pages = document.querySelectorAll('.help_page');
+            if (cur_help_page > 0)
+            {
+                pages[cur_help_page].classList.remove('active');
+                cur_help_page--;
+                pages[cur_help_page].classList.add('active');
+                document.getElementById('next_help_btn').disabled = false;
+                if (cur_help_page < 1)
+                    document.getElementById('prev_help_btn').disabled = true;
+            }
+        };
+
     </script>
 </head>
-<body style="overscroll-behavior: none;">
-    <div id="main_menu" style="width: 100%; height: 25px; vertical-align: middle; background-color: #E0FFFF; ">
+<body>
+    <div id="main_menu">
         <span ontouchstart="show_modal(help_div);">Help</span>
-        <!--<span style="float:right;">About</span>-->
-        <span ontouchstart="send_data('#q');" style="float:right;">Exit</span>
+        <span ontouchstart="show_modal(document.getElementById('about_div'));" style="margin-right: 10px;">About</span>
+        <span ontouchstart="send_data('#q');" style="margin-right: 10px;">Exit</span>
     </div>
 
-    <div id="main" style="">
+    <!-- main content -->
+    <div id="main" style="position:relative;">
         <!-- inventory -->
-        <div id="inv_div" class="invdiv" style="float:left;height:540px;"></div>
+        <div id="inv_div" class="invdiv itemlst"></div>
 
         <!-- map -->
-        <div id="map_div" style="float:left;position:relative;zoom:95%;">
+        <div id="map_div" style="float:left;position:relative;">
 
-            <div style="position:absolute;top:0px;left:0px;">
+            <div class="abs">
                 <table class="maptable" style="" id="map"></table>
             </div>
 
-            <div id="floor_map" style="position: absolute; top: 0px; left: 0px;"></div>
+            <div id="floor_map" class="abs"></div>
 
-            <div style="position: absolute; top: 0px; left: 0px;">
+            <div class="abs">
                 <table class="maptable" id="wall_map"></table>
             </div>
 
-            <div id="pers_map" style="position: absolute; top: 0px; left: 0px;">
+            <div id="pers_map" class="abs">
             </div>
 
-            <div id="vis_div" style="position: absolute; top: 0px; left: 0px;">
+            <div id="vis_div" class="abs">
                 <table class="maptable" id="vis_map"></table>
             </div>
 
-            <div id="scream_map" style="position: absolute; top: 0px; left: 0px;"></div>
+            <div id="scream_map" class="abs"></div>
+
+            <div class="abs">
+                <table class="maptable" id="click_map"></table>
+            </div>
         </div>
+
+
+        <!-- our suggestion -->
+        <div id="sug_div" class="itemlst" style="position: absolute; top: 0px; left: 56px; z-index: 10; background-color: #fff2c9;"></div>
+        <!-- opponent suggestion -->
+        <div id="opsug_div" class="itemlst" style="position: absolute; top: 0px; left: calc(100vw - 110px); z-index: 10; background-color: #fff2c9;"></div>
+
+        <!-- opponents inventory -->
+        <div id="trade_div" class="itemlst" style="position: absolute; top: 0px; left: calc(100vw - 54px); z-index: 10; background-color: #fff2c9;"></div>
+
+
     </div>
 
     <!-- state bars -->
-    <div style="clear:both;padding-top:20px;">
+    <div style="display: flex; flex-direction: column; justify-content: center; align-items: center; width: 100%; position: relative;">
+        <!--<div style="clear:both;padding-top:20px;">-->
         <div style="background-color: #E0FFFF; width: 100%; text-align: center; height:25px;">ID: <span id="id_label"></span>, hp: <span id="hp_label"></span>, state: <span id="state_label"></span>. <span id="dt_label"></span></div>
         <form style="justify-content: center; display: flex;">
             <input name="text" maxlength=60 value="hello"><button type="button" onclick="let frm = get_ptag(this, 'FORM'); send_data('#s' + frm.text.value);">say</button>
@@ -557,17 +713,16 @@
 
     <!-- some utils tags, css and scripts are in forms.css/forms.js -->
     <!-- for input numbers -->
-    <div id="numb_input" style="top:20%; left:0%;">
+    <div id="numb_input" class="modal" style="z-index:20; width: 80%">
         <span>Enter number: </span>
         <form onsubmit="var_func(this.val.value, obj_ind); close_pdiv(this); return false;">
-            <input name="val" type="number" value="1" onfocus="select(this);" onkeydown="if (event.keyCode == 27) close_modal(this); event.stopPropagation();" />
+            <input name="val" type="number" value="1" onfocus="select(this);" onkeydown="if (event.keyCode == 27) close_pdiv(this); event.stopPropagation();" style="width:80px;height:40px;" />
             <input type="submit" value="OK" />
             <button type="button" onclick="close_pdiv(this);">Cancel</button>
         </form>
     </div>
 
     <!-- for login/registration form -->
-    <div class="gray active"></div>
     <div class="modal active">
         <a target="_blank" href="about.html">How to play</a>
         <h2></h2>
@@ -593,7 +748,7 @@
                     <td><input type="radio" value="4" name="cls" /></td>
                 </tr>
             </table>
-            <button id="reg_btn" type="button" onclick="let ps = this.parentNode.pass.value; if (ps == '') { alert('empty password!'); return false; }; if (ps == this.parentNode.conf.value) { connect(0, this.parentNode.pass.value, this.parentNode.cls.value); close_modal(this); } else alert('Passwords are mismatch');">START A NEW GAME</button>
+            <button id="reg_btn" type="button" onclick="let ps = this.parentNode.pass.value; if (ps == '') { alert('empty password!'); return false; }; if (ps == this.parentNode.conf.value) { connect(0, this.parentNode.pass.value, this.parentNode.cls.value); close_pdiv(this); } else alert('Passwords are mismatch');">START A NEW GAME</button>
             <br /><br />
             <span style="font-size: 10pt;">password (default: ff):</span>
             <input name="pass" value="ff" type="password" style="font-size: 10pt;" />
@@ -609,7 +764,7 @@
             <br /> Enter password: <br />
             <input name="pass" value="" type="password" />
             <br />
-            <button type="button" onclick="connect(this.parentNode.id.value, this.parentNode.pass.value); close_modal(this);">Login</button>
+            <button type="button" onclick="connect(this.parentNode.id.value, this.parentNode.pass.value); close_pdiv(this);">Login</button>
         </form>
     </div>
     <!-- end login/registration form -->
@@ -642,42 +797,61 @@
     </div>
 
 
-
     <!-- invenory (and opponent's) -->
-    <div id="opponent_div">
-        <div id="sug_div" class="suginvdiv" ondrop="suggest_invent_img(drag_img, this); hide_elem(agree_btn); return false;" ondragover="return false;"></div>
-        <br />
-        <span id="trade_result"></span>
-        <button id="trade_btn" onclick="send_trade(sug_div, opsug_div); hide_elem(agree_btn);">suggest</button>
+    <div id="opponent_div" class="modal">
+        Trade response: <span id="trade_result"></span>
+        <button id="trade_btn" onclick="send_trade('e', sug_div, opsug_div); hide_elem(agree_btn);">suggest</button>
         <button id="agree_btn" onclick="send_data('#a'); hide_elem(this);">agree</button>
-        <br />
-        <div id="opsug_div" class="suginvdiv" ondrop="suggest_invent_img(drag_img, this); hide_elem(agree_btn); return false;" ondragover="return false;"></div>
-        <div id="trade_div"></div>
+        <button id="ask_btn" onclick="send_trade('f', sug_div, opsug_div);">ask</button>
+        <button onclick="send_data('#!');">escape</button>
     </div>
 
     <!-- history (and debugging) -->
     <div id="debug_div"></div>
 
-    <div id="log_window" class="modal" style="position:absolute;">
-        <div id="log_div" style="overflow:auto;"></div>
+    <div id="log_window" class="modal">
+        <div id="log_div" style="overflow:auto;max-height:300px;"></div>
         <button type="button" onclick="close_pdiv(this);">close</button>
     </div>
     <!--</center>-->
 
-    <div id="help_div" class="modal">
-        <h1>Control</h1>
-        <ul>
-            <li>Use right or left swap to turn right or left</li>
-            <li>Use up/down swap to move <b>forward</b></li>
 
-            <li>Use <button>say</button> to say phrase from input box</li>
-            <li>Use <button>&#8634;</button> to take items from the ground</li>
-            <li>Use <button>B</button> to open building's window</li>
-            <li>Use <button>M</button> to open craft window</li>
-            <li>Use <button>L</button> to show logs</li>
-            <li>Use <button>A</button> to forced attack (attack something/somebody which you can't by default)</li>
-        </ul>
+    <div id="about_div" class="modal">
+        <p>DwDung is a massive multiplayer online game in oldschool RPG style.</p>
+        <p>You can also try a desktop version of this game: <a href="./index.html">DwDung desktop</a>.</p>
         <button type="button" onclick="close_pdiv(this);">close</button>
+    </div>
+
+    <div id="help_div" class="modal" style="width:80%;">
+        <div class="help_page active">
+            <h1>Control</h1>
+            <ul>
+                <li>Tap on the cells in front of your personage to go stright</li>
+                <li>Tap on the cells left of your personage to turn around</li>
+
+                <li>Use <button>say</button> to say phrase from input box</li>
+                <li>Use <button>&#8634;</button> to take items from the ground</li>
+                <li>Use <button>B</button> to open building's window</li>
+                <li>Use <button>M</button> to open craft window</li>
+                <li>Use <button>L</button> to show logs</li>
+                <li>Use <button>A</button> to forced attack (attack something/somebody which you can't by default)</li>
+            </ul>
+        </div>
+        <div class="help_page">
+            <h1>Inventory</h1>
+            <p>Inventory is on the left side. Equiped items are marked by red border.</p>
+            <p>Double tap on inventory items show context menu:</p>
+            <ul>
+                <li>
+                    <button>Use / eqip</button> is for using or equipping items, if possible.
+                    Note that you can't equip an item if correspondig place is used. For example, a stick or club requires one free hand, but a pickaxe requires both hand are free.
+                </li>
+                <li><button>Drop</button> is for dropping items on the ground. If you have more than one item you will be asked, how many items you want to drop.</li>
+            </ul>
+        </div>
+        <button type="button" id="prev_help_btn" onclick="show_prev_help();" disabled>&lt;&lt; prev</button>
+        <button type="button" onclick="close_pdiv(this);">close</button>
+        <button type="button" id="next_help_btn" onclick="show_next_help();">next &gt;&gt;</button>
     </div>
 
     <script>
@@ -685,11 +859,32 @@
         numb_input = document.getElementById('numb_input');
         hide_elem(numb_input);
 
+        // calculate of availiable size:
+        const screenWidth = window.innerWidth;
+        let max_width = Math.floor((window.innerWidth - 54) / cell_size);
+        if (max_width < 8) {
+            map_width = 8;
+            map_height = 14;
+            document.getElementById('map_div').style.transform = 'scale(0.95)';
+        }
+        else {
+            map_width = max_width - max_width % 2;
+            map_height = 14;
+        }
+
         init_general_elems();
         init_client_elems();
         fill_table_cont(map_width, map_height, '', map_content, map);
         fill_table_cont(map_width, map_height, '', '<img src="' + img_dir + 'map/empty.png" />', wall_map);
         fill_table_cont(map_width, map_height, '', '<img src="' + img_dir + 'map/dark.png" />', vis_map);
+
+        // determine coordinates of start floating data
+        //msg_x = map.getBoundingClientRect().left + 10;
+        //msg_y = map.getBoundingClientRect().top + map_height / 2 * 35;
+
+
+        let click_map = document.getElementById('click_map');
+        fill_table_cont(map_width, map_height, '', '<img src="' + img_dir + 'map/empty.png" />', click_map);
 
         let use_div = document.getElementById('use_div');
         hide_elem(use_div);
@@ -700,11 +895,45 @@
         hide_elem(log_window);
         set_trade_mode(false);
 
-        let map_div = document.getElementById('map_div');
-        map_div.ontouchstart = function () { start_touch(event); event.stopPropagation(); };
-        map_div.ontouchend = function () { end_touch(event); event.stopPropagation(); };
+        //let map_div = document.getElementById('map_div');
+        //map_div.ontouchstart = function () { start_touch(event); event.stopPropagation(); };
+        //map_div.ontouchend = function () { end_touch(event); event.stopPropagation(); };
+
+        // coord of own_img:    map_width / 2 - 1, map_height / 2 - 1
+        let a = map_width / 2 - 1;
+        let b = map_height / 2 - 1;
+
+        // go forward
+        click_map.rows[b - 1].cells[a].firstChild.ontouchstart = function () { send_data('#m'); };
+        click_map.rows[b - 1].cells[a + 1].firstChild.ontouchstart = function () { send_data('#m'); };
+        // and the upper two cells:
+        click_map.rows[b - 2].cells[a].firstChild.ontouchstart = function () { send_data('#m'); };
+        click_map.rows[b - 2].cells[a + 1].firstChild.ontouchstart = function () { send_data('#m'); };
+
+
+        // turn left
+        click_map.rows[b].cells[a - 1].firstChild.ontouchstart = function () { send_data('#l'); };
+        click_map.rows[b + 1].cells[a - 1].firstChild.ontouchstart = function () { send_data('#l'); };
+        // and two more cells
+        click_map.rows[b].cells[a - 2].firstChild.ontouchstart = function () { send_data('#l'); };
+        click_map.rows[b + 1].cells[a - 2].firstChild.ontouchstart = function () { send_data('#l'); };
+
+
+        // turn right
+        click_map.rows[b].cells[a + 2].firstChild.ontouchstart = function () { send_data('#r'); };
+        click_map.rows[b + 1].cells[a + 2].firstChild.ontouchstart = function () { send_data('#r'); };
+        // and two more cells
+        click_map.rows[b].cells[a + 3].firstChild.ontouchstart = function () { send_data('#r'); };
+        click_map.rows[b + 1].cells[a + 3].firstChild.ontouchstart = function () { send_data('#r'); };
+
+        // take from the ground (the same cells as pers)
+
 
         let help_div = document.getElementById('help_div');
+        click_map.rows[b].cells[a].firstChild.ontouchstart = function () { send_data('#t'); };
+        click_map.rows[b].cells[a + 1].firstChild.ontouchstart = function () { send_data('#t'); };
+        click_map.rows[b + 1].cells[a].firstChild.ontouchstart = function () { send_data('#t'); };
+        click_map.rows[b + 1].cells[a + 1].firstChild.ontouchstart = function () { send_data('#t'); };
 
 
         // CHANGE
